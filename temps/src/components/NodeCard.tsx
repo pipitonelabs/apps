@@ -52,7 +52,7 @@ const pct = (x: number) => Math.max(0, Math.min(100, ((x - 20) / 80) * 100))
 function Value({ metric, value, size }: { metric: Metric; value: Reading; size: 'lg' | 'md' }) {
   const state = tempState(metric, value)
   const shown = useTween(typeof value === 'number' ? value : null)
-  const num = size === 'lg' ? 'text-5xl' : 'text-3xl'
+  const num = size === 'lg' ? 'text-4xl sm:text-5xl' : 'text-2xl sm:text-3xl'
   if (value === 'no-sensor') return <span className="text-sm text-muted-foreground">No sensor</span>
   if (value === null)
     return (
@@ -66,7 +66,7 @@ function Value({ metric, value, size }: { metric: Metric; value: Reading; size: 
   return (
     <span className={cn('leading-none', STATE_TEXT[state])}>
       <span className={cn(num, 'font-light tracking-tight tabular-nums')}>{(shown ?? value).toFixed(1)}</span>
-      <span className="ml-1 text-sm text-muted-foreground">°C</span>
+      <span className="ml-0.5 text-xs text-muted-foreground sm:ml-1 sm:text-sm">°C</span>
     </span>
   )
 }
@@ -96,7 +96,7 @@ export function NodeCard({ live }: { live: NodeLive }) {
   const meta = NODES.find((n) => n.name === live.node)!
   const { lastSeen } = live
   return (
-    <Card className={cn('min-h-72 justify-between gap-6 rounded-2xl border-0 p-6 ring-1 ring-border', !live.online && 'opacity-60')}>
+    <Card className={cn('min-h-72 justify-between gap-6 rounded-2xl border-0 p-5 sm:p-6 ring-1 ring-border', !live.online && 'opacity-60')}>
       <div className="flex items-start justify-between gap-4">
         <div className="flex min-w-0 flex-col gap-2">
           <span className="text-2xl font-medium">{live.node}</span>
@@ -124,7 +124,7 @@ export function NodeCard({ live }: { live: NodeLive }) {
         </div>
       </div>
       <Bar metric="cpu" value={live.values.cpu} />
-      <div className="grid grid-cols-3 gap-5 border-t border-border pt-5">
+      <div className="grid grid-cols-3 gap-3 border-t sm:gap-5 border-border pt-5">
         {SUB.map(({ key, label }) => (
           <div key={key} className="flex min-w-0 flex-col gap-2">
             <span className="text-xs text-muted-foreground">{label}</span>

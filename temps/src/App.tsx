@@ -17,10 +17,10 @@ export default function App() {
   return (
     <TooltipProvider>
       <header className="sticky top-0 z-20 border-b border-border bg-background/85 pt-[env(safe-area-inset-top)] backdrop-blur-xl">
-        <div className={`${WRAP} flex flex-wrap items-center justify-between gap-4 py-5`}>
+        <div className={`${WRAP} flex items-center justify-between gap-4 py-4 sm:py-5`}>
           <div className="flex items-baseline gap-3">
             <h1 className="text-2xl font-medium tracking-tight">Thermals</h1>
-            <span className="text-sm text-muted-foreground">pipitonelabs k8s</span>
+            <span className="hidden text-sm text-muted-foreground sm:inline">pipitonelabs k8s</span>
           </div>
           <div className="flex items-center gap-3 text-sm text-muted-foreground">
             {live.stale && <Badge variant="destructive">Data stale</Badge>}
@@ -28,12 +28,12 @@ export default function App() {
               <span className="pulse-dot size-1.5 rounded-full bg-emerald-400" />
               Live
             </span>
-            <span className="tabular-nums">{live.updatedAt ? `${etClock(live.updatedAt)} ET` : 'Connecting…'}</span>
+            <span className="hidden tabular-nums sm:inline">{live.updatedAt ? `${etClock(live.updatedAt)} ET` : 'Connecting…'}</span>
           </div>
         </div>
       </header>
 
-      <main className={`${WRAP} flex flex-col gap-12 py-8`}>
+      <main className={`${WRAP} flex flex-col gap-10 py-6 sm:gap-12 sm:py-8`}>
         {live.data ? (
           <LiveGrid nodes={live.data} />
         ) : (

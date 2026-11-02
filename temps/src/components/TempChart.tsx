@@ -31,10 +31,10 @@ export function TempChart({ metric, title, rows, start, end }: { metric: Metric;
     return null
   }
   return (
-    <Card className="gap-4 rounded-2xl border-0 p-6 ring-1 ring-border">
-      <div className="flex flex-wrap items-center justify-between gap-3">
+    <Card className="gap-4 rounded-2xl border-0 px-3 py-5 ring-1 sm:p-6 ring-border">
+      <div className="flex flex-wrap items-center justify-between gap-3 px-2 sm:px-0">
         <span className="text-base font-medium">{title}</span>
-        <div className="flex flex-wrap gap-5 text-sm">
+        <div className="flex flex-wrap gap-x-4 gap-y-1 text-xs sm:gap-5 sm:text-sm">
           {nodes.map((n) => (
             <span key={n.name} className="flex items-center gap-2 text-muted-foreground">
               <span className="size-2 rounded-full" style={{ background: `var(--color-${n.name})` }} />
@@ -44,7 +44,7 @@ export function TempChart({ metric, title, rows, start, end }: { metric: Metric;
           ))}
         </div>
       </div>
-      <ChartContainer config={config} className="aspect-auto h-[300px] w-full">
+      <ChartContainer config={config} className="aspect-auto h-[220px] w-full sm:h-[300px]">
         <LineChart data={rows} margin={{ top: 8, right: 8, left: 0, bottom: 0 }}>
           <CartesianGrid vertical={false} stroke="var(--border)" />
           <XAxis
@@ -58,7 +58,7 @@ export function TempChart({ metric, title, rows, start, end }: { metric: Metric;
             minTickGap={56}
           />
           <YAxis
-            width={40}
+            width={36}
             tickLine={false}
             axisLine={false}
             domain={[(min: number) => Math.floor(min - 3), (max: number) => Math.ceil(max + 3)]}
