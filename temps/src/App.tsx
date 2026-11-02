@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { Badge } from '@/components/ui/badge'
 import { TooltipProvider } from '@/components/ui/tooltip'
 import { LiveGrid } from '@/components/LiveGrid'
+import { Timelines } from '@/components/Timelines'
 import { usePoll } from '@/hooks/usePoll'
 import { fetchLive } from '@/lib/live'
 import type { NodeName } from '@/lib/nodes'
@@ -13,7 +14,7 @@ const etClock = (ms: number) =>
 
 export default function App() {
   const live = usePoll(fetchLive, LIVE_MS)
-  const [lastSeen] = useState<Partial<Record<NodeName, number | null>>>({})
+  const [lastSeen, setLastSeen] = useState<Partial<Record<NodeName, number | null>>>({})
 
   return (
     <TooltipProvider>
@@ -40,6 +41,8 @@ export default function App() {
             {live.error ? 'prometheus unreachable — retrying' : 'acquiring telemetry…'}
           </div>
         )}
+
+        <Timelines onLastSeen={setLastSeen} />
       </div>
     </TooltipProvider>
   )
