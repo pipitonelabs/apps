@@ -1,13 +1,14 @@
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
+import { Badge } from '@/components/ui/badge'
 import { usePoll } from '@/hooks/usePoll'
-import { METRICS, type NodeName } from '@/lib/nodes'
+import { METRICS } from '@/lib/nodes'
 import { DEFAULT_RANGE, fetchSeries, type RangeKey } from '@/lib/series'
 import { RangePicker } from './RangePicker'
 import { TempChart } from './TempChart'
 
 const CHART_MS = 30_000
 
-export function Timelines({ onLastSeen }: { onLastSeen: (s: Partial<Record<NodeName, number | null>>) => void }) {
+export function Timelines() {
   const [range, setRange] = useState<RangeKey>(DEFAULT_RANGE)
   const series = usePoll(
     () => Promise.all(METRICS.map(({ key }) => fetchSeries(key, range))),
@@ -15,15 +16,13 @@ export function Timelines({ onLastSeen }: { onLastSeen: (s: Partial<Record<NodeN
     [range],
   )
 
-  const cpuLastSeen = series.data?.[0].lastSeen
-  useEffect(() => {
-    if (cpuLastSeen) onLastSeen(cpuLastSeen)
-  }, [cpuLastSeen, onLastSeen])
-
   return (
     <section className="flex flex-col gap-4">
       <div className="flex flex-wrap items-center justify-between gap-3">
-        <h2 className="font-heading text-lg font-semibold tracking-[0.25em] uppercase">Timeline</h2>
+        <div className="flex items-center gap-3">
+          <h2 className="font-heading text-lg font-semibold tracking-[0.25em] uppercase">Timeline</h2>
+          {series.stale && <Badge variant="destructive">history stale</Badge>}
+        </div>
         <RangePicker value={range} onChange={setRange} />
       </div>
       {series.data ? (
@@ -38,7 +37,9 @@ export function Timelines({ onLastSeen }: { onLastSeen: (s: Partial<Record<NodeN
           />
         ))
       ) : (
-        <div className="py-16 text-center text-xs tracking-[0.3em] text-muted-foreground uppercase">loading history…</div>
+        <div className="py-16 text-center text-xs tracking-[0.3em] text-muted-foreground uppercase">
+          {series.error ? 'history unavailable — retrying' : 'loading history…'}
+        </div>
       )}
     </section>
   )

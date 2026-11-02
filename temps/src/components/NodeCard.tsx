@@ -66,7 +66,7 @@ function ReadingCell({ metric, label, value }: { metric: Metric; label: string; 
         </Tooltip>
       ) : (
         <span className={cn('glow-text leading-none', STATE_TEXT[state])}>
-          <span className="text-4xl font-light tabular-nums">{shown!.toFixed(1)}</span>
+          <span className="text-4xl font-light tabular-nums">{(shown ?? value).toFixed(1)}</span>
           <span className="ml-1 text-sm opacity-70">°C</span>
         </span>
       )}
@@ -83,8 +83,9 @@ function ReadingCell({ metric, label, value }: { metric: Metric; label: string; 
   )
 }
 
-export function NodeCard({ live, lastSeen }: { live: NodeLive; lastSeen: number | null | undefined }) {
+export function NodeCard({ live }: { live: NodeLive }) {
   const meta = NODES.find((n) => n.name === live.node)!
+  const { lastSeen } = live
   return (
     <Card className={cn('glow-edge rounded-2xl backdrop-blur-md', !live.online && 'opacity-70')}>
       <CardHeader className="flex items-start justify-between">

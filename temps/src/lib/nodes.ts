@@ -28,4 +28,7 @@ export const QUERIES: Record<Metric, string> = {
   mem: `max by (instance) (${T}{chip=~"i2c_0_0_005."})`,
 }
 
-export const UP_QUERY = 'up{instance=~"192\\\\.168\\\\.10\\\\.1[0-5]:9100"}'
+const UP_SELECTOR = 'up{instance=~"192\\\\.168\\\\.10\\\\.1[0-5]:9100"}'
+export const UP_QUERY = UP_SELECTOR
+/** Unix seconds of each node's last successful scrape within Prometheus retention (1m resolution). */
+export const LAST_SEEN_QUERY = `max by (instance) (max_over_time(timestamp(${UP_SELECTOR} == 1)[14d:1m]))`

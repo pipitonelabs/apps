@@ -45,6 +45,13 @@ describe('buildLive', () => {
     expect(m1.values.nvme1).toBeNull()
   })
 
+  it('gives an offline node its last-seen time in ms, independent of chart range', () => {
+    const seen: PromVector = [s('192.168.10.15', 1762122180)]
+    const live = buildLive(allUp.slice(0, 3), full(), seen)
+    expect(live[3].lastSeen).toBe(1762122180 * 1000)
+    expect(live[0].lastSeen).toBeNull()
+  })
+
   it('reports w2 memory as no-sensor when online', () => {
     expect(buildLive(allUp, full())[3].values.mem).toBe('no-sensor')
   })

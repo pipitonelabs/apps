@@ -1,10 +1,12 @@
-import { METRICS, NODES, QUERIES, UP_QUERY, nodeByInstance, type Metric, type NodeName } from './nodes'
+import { LAST_SEEN_QUERY, METRICS, NODES, QUERIES, UP_QUERY, nodeByInstance, type Metric, type NodeName } from './nodes'
 import { promQuery, type PromVector } from './prom'
 
 export type Reading = number | null | 'no-sensor'
 export interface NodeLive {
   node: NodeName
   online: boolean
+  /** ms of the last successful scrape; only set for offline nodes */
+  lastSeen: number | null
   values: Record<Metric, Reading>
 }
 
@@ -18,8 +20,9 @@ function index(v: PromVector): Map<NodeName, number> {
   return m
 }
 
-export function buildLive(up: PromVector, byMetric: Record<Metric, PromVector>): NodeLive[] {
+export function buildLive(up: PromVector, byMetric: Record<Metric, PromVector>, seen: PromVector = []): NodeLive[] {
   const upIdx = index(up)
+  const seenIdx = index(seen)
   const idx = Object.fromEntries(METRICS.map(({ key }) => [key, index(byMetric[key])])) as Record<Metric, Map<NodeName, number>>
   return NODES.map(({ name, hasMemSensor }) => {
     const online = (upIdx.get(name) ?? 0) === 1
@@ -30,12 +33,16 @@ export function buildLive(up: PromVector, byMetric: Record<Metric, PromVector>):
         return [key, idx[key].get(name) ?? null]
       }),
     ) as Record<Metric, Reading>
-    return { node: name, online, values }
+    const s = seenIdx.get(name)
+    return { node: name, online, lastSeen: !online && s !== undefined ? s * 1000 : null, values }
   })
 }
 
 export async function fetchLive(): Promise<NodeLive[]> {
   const [up, ...vs] = await Promise.all([promQuery(UP_QUERY), ...METRICS.map(({ key }) => promQuery(QUERIES[key]))])
   const byMetric = Object.fromEntries(METRICS.map(({ key }, i) => [key, vs[i]])) as Record<Metric, PromVector>
-  return buildLive(up, byMetric)
+  const first = buildLive(up, byMetric)
+  // Only pay for the 14d lookback when a node is actually offline.
+  if (first.every((n) => n.online)) return first
+  return buildLive(up, byMetric, await promQuery(LAST_SEEN_QUERY))
 }

@@ -1,11 +1,9 @@
-import { useState } from 'react'
 import { Badge } from '@/components/ui/badge'
 import { TooltipProvider } from '@/components/ui/tooltip'
 import { LiveGrid } from '@/components/LiveGrid'
 import { Timelines } from '@/components/Timelines'
 import { usePoll } from '@/hooks/usePoll'
 import { fetchLive } from '@/lib/live'
-import type { NodeName } from '@/lib/nodes'
 
 const LIVE_MS = 10_000
 
@@ -14,7 +12,6 @@ const etClock = (ms: number) =>
 
 export default function App() {
   const live = usePoll(fetchLive, LIVE_MS)
-  const [lastSeen, setLastSeen] = useState<Partial<Record<NodeName, number | null>>>({})
 
   return (
     <TooltipProvider>
@@ -35,14 +32,14 @@ export default function App() {
         </header>
 
         {live.data ? (
-          <LiveGrid nodes={live.data} lastSeen={lastSeen} />
+          <LiveGrid nodes={live.data} />
         ) : (
           <div className="py-20 text-center text-xs tracking-[0.3em] text-muted-foreground uppercase">
             {live.error ? 'prometheus unreachable — retrying' : 'acquiring telemetry…'}
           </div>
         )}
 
-        <Timelines onLastSeen={setLastSeen} />
+        <Timelines />
       </div>
     </TooltipProvider>
   )
