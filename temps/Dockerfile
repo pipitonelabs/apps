@@ -1,0 +1,12 @@
+FROM node:22-alpine AS build
+WORKDIR /app
+COPY package*.json ./
+RUN npm ci
+COPY . .
+RUN npm test && npm run build
+
+FROM nginxinc/nginx-unprivileged:1.29-alpine
+ENV PROM_URL=http://kube-prometheus-stack-prometheus.observability.svc.cluster.local:9090
+COPY nginx.conf.template /etc/nginx/templates/default.conf.template
+COPY --from=build /app/dist /usr/share/nginx/html
+EXPOSE 8080
