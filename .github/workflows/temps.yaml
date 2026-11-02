@@ -24,6 +24,10 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      - name: Audit production dependencies
+        working-directory: temps
+        run: npm audit --omit=dev --audit-level=high
+
       - name: Build image
         uses: docker/build-push-action@v6
         with:
