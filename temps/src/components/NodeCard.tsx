@@ -1,19 +1,19 @@
 import { useEffect, useRef, useState } from 'react'
-import { Card, CardContent, CardHeader } from '@/components/ui/card'
+import { Card } from '@/components/ui/card'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
 import type { NodeLive, Reading } from '@/lib/live'
-import { METRICS, NODES, type Metric } from '@/lib/nodes'
+import { NODES, type Metric } from '@/lib/nodes'
 import { THRESHOLDS, tempState, type TempState } from '@/lib/thresholds'
 import { cn } from '@/lib/utils'
 
 const STATE_TEXT: Record<TempState, string> = {
-  normal: 'text-state-normal',
+  normal: 'text-foreground',
   warm: 'text-state-warm',
   hot: 'text-state-hot',
   none: 'text-muted-foreground',
 }
 const STATE_BG: Record<TempState, string> = {
-  normal: 'bg-state-normal',
+  normal: 'bg-foreground/80',
   warm: 'bg-state-warm',
   hot: 'bg-state-hot',
   none: 'bg-muted',
@@ -36,8 +36,7 @@ function useTween(target: number | null, ms = 600): number | null {
     let raf = 0
     const step = (now: number) => {
       const k = Math.min(1, (now - t0) / ms)
-      const x = a + (target - a) * (1 - Math.pow(1 - k, 3))
-      setV(x)
+      setV(a + (target - a) * (1 - Math.pow(1 - k, 3)))
       if (k < 1) raf = requestAnimationFrame(step)
       else from.current = target
     }
@@ -47,75 +46,93 @@ function useTween(target: number | null, ms = 600): number | null {
   return v
 }
 
-function ReadingCell({ metric, label, value }: { metric: Metric; label: string; value: Reading }) {
+// Bar spans 20–100 °C; the tick marks the warm threshold.
+const pct = (x: number) => Math.max(0, Math.min(100, ((x - 20) / 80) * 100))
+
+function Value({ metric, value, size }: { metric: Metric; value: Reading; size: 'lg' | 'md' }) {
   const state = tempState(metric, value)
   const shown = useTween(typeof value === 'number' ? value : null)
-  // Bar spans 20–100 °C; the tick marks the warm threshold.
-  const pct = (x: number) => Math.max(0, Math.min(100, ((x - 20) / 80) * 100))
+  const num = size === 'lg' ? 'text-5xl' : 'text-3xl'
+  if (value === 'no-sensor') return <span className="text-sm text-muted-foreground">No sensor</span>
+  if (value === null)
+    return (
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <span className={cn(num, 'leading-none font-light text-muted-foreground')}>—</span>
+        </TooltipTrigger>
+        <TooltipContent>No data</TooltipContent>
+      </Tooltip>
+    )
   return (
-    <div className="flex min-w-0 flex-col gap-1.5">
-      <span className="text-[10px] tracking-[0.2em] text-muted-foreground uppercase">{label}</span>
-      {value === 'no-sensor' ? (
-        <span className="py-2 text-xs tracking-wider text-muted-foreground uppercase">no sensor</span>
-      ) : value === null ? (
-        <Tooltip>
-          <TooltipTrigger asChild>
-            <span className="text-3xl leading-none text-muted-foreground">—</span>
-          </TooltipTrigger>
-          <TooltipContent>no data</TooltipContent>
-        </Tooltip>
-      ) : (
-        <span className={cn('glow-text leading-none', STATE_TEXT[state])}>
-          <span className="text-4xl font-light tabular-nums">{(shown ?? value).toFixed(1)}</span>
-          <span className="ml-1 text-sm opacity-70">°C</span>
-        </span>
+    <span className={cn('leading-none', STATE_TEXT[state])}>
+      <span className={cn(num, 'font-light tracking-tight tabular-nums')}>{(shown ?? value).toFixed(1)}</span>
+      <span className="ml-1 text-sm text-muted-foreground">°C</span>
+    </span>
+  )
+}
+
+function Bar({ metric, value }: { metric: Metric; value: Reading }) {
+  const state = tempState(metric, value)
+  return (
+    <div className="relative h-0.5 w-full rounded-full bg-foreground/10">
+      {typeof value === 'number' && (
+        <div
+          className={cn('absolute inset-y-0 left-0 rounded-full transition-[width] duration-700', STATE_BG[state])}
+          style={{ width: `${pct(value)}%` }}
+        />
       )}
-      <div className="relative h-1 w-full rounded-full bg-muted/60">
-        {typeof value === 'number' && (
-          <div
-            className={cn('absolute inset-y-0 left-0 rounded-full transition-[width] duration-700', STATE_BG[state])}
-            style={{ width: `${pct(value)}%`, boxShadow: '0 0 10px currentColor' }}
-          />
-        )}
-        <div className="absolute -top-0.5 h-2 w-px bg-state-warm/70" style={{ left: `${pct(THRESHOLDS[metric].warm)}%` }} />
-      </div>
+      <div className="absolute -top-0.5 h-1.5 w-px bg-foreground/30" style={{ left: `${pct(THRESHOLDS[metric].warm)}%` }} />
     </div>
   )
 }
+
+const SUB: { key: Metric; label: string }[] = [
+  { key: 'nvme0', label: 'NVMe 0' },
+  { key: 'nvme1', label: 'NVMe 1' },
+  { key: 'mem', label: 'Memory' },
+]
 
 export function NodeCard({ live }: { live: NodeLive }) {
   const meta = NODES.find((n) => n.name === live.node)!
   const { lastSeen } = live
   return (
-    <Card className={cn('glow-edge rounded-2xl backdrop-blur-md', !live.online && 'opacity-70')}>
-      <CardHeader className="flex items-start justify-between">
-        <div className="flex flex-col gap-1">
-          <span className="font-heading text-2xl font-semibold tracking-[0.15em] uppercase">{live.node}</span>
-          <span className="text-[10px] leading-relaxed tracking-[0.18em] text-muted-foreground uppercase">
+    <Card className={cn('min-h-72 justify-between gap-6 rounded-2xl border-0 p-6 ring-1 ring-border', !live.online && 'opacity-60')}>
+      <div className="flex items-start justify-between gap-4">
+        <div className="flex min-w-0 flex-col gap-2">
+          <span className="text-2xl font-medium">{live.node}</span>
+          <span className="text-xs leading-relaxed text-muted-foreground">
             {meta.hw}
             <br />
             {meta.ip}
           </span>
-        </div>
-        {live.online ? (
-          <span className="flex items-center gap-2 text-[10px] tracking-[0.2em] text-state-normal uppercase">
-            <span className="pulse-dot size-2 rounded-full bg-state-normal shadow-[0_0_10px_var(--state-normal)]" />
-            online
-          </span>
-        ) : (
-          <span className="flex flex-col items-end gap-0.5 text-[10px] tracking-[0.2em] text-state-hot uppercase">
-            <span className="flex items-center gap-2">
-              <span className="size-2 rounded-full bg-state-hot" /> offline
+          {live.online ? (
+            <span className="flex items-center gap-2 text-xs text-muted-foreground">
+              <span className="pulse-dot size-1.5 rounded-full bg-emerald-400" /> Online
             </span>
-            {lastSeen ? <span className="text-muted-foreground">last seen {etTime(lastSeen)}</span> : null}
-          </span>
-        )}
-      </CardHeader>
-      <CardContent className="grid grid-cols-2 gap-x-6 gap-y-5">
-        {METRICS.map(({ key, label }) => (
-          <ReadingCell key={key} metric={key} label={label} value={live.values[key]} />
+          ) : (
+            <span className="flex flex-col gap-0.5 text-xs">
+              <span className="flex items-center gap-2 text-state-hot">
+                <span className="size-1.5 rounded-full bg-state-hot" /> Offline
+              </span>
+              {lastSeen ? <span className="text-muted-foreground">Last seen {etTime(lastSeen)}</span> : null}
+            </span>
+          )}
+        </div>
+        <div className="flex shrink-0 flex-col items-end gap-2">
+          <span className="text-xs text-muted-foreground">CPU</span>
+          <Value metric="cpu" value={live.values.cpu} size="lg" />
+        </div>
+      </div>
+      <Bar metric="cpu" value={live.values.cpu} />
+      <div className="grid grid-cols-3 gap-5 border-t border-border pt-5">
+        {SUB.map(({ key, label }) => (
+          <div key={key} className="flex min-w-0 flex-col gap-2">
+            <span className="text-xs text-muted-foreground">{label}</span>
+            <Value metric={key} value={live.values[key]} size="md" />
+            <Bar metric={key} value={live.values[key]} />
+          </div>
         ))}
-      </CardContent>
+      </div>
     </Card>
   )
 }

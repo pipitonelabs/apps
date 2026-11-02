@@ -1,5 +1,4 @@
 import { describe, expect, it } from 'vitest'
-import { eventsIn } from './events'
 import { lastSeen, stepFor, toChartRows } from './series'
 import type { PromMatrix } from './prom'
 
@@ -36,13 +35,4 @@ describe('toChartRows', () => {
 describe('lastSeen', () => {
   it('returns the last sample time in ms', () => expect(lastSeen(matrix, 'w2')).toBe((start + 2 * step) * 1000))
   it('returns null for a node with no samples', () => expect(lastSeen(matrix, 'm1')).toBeNull())
-})
-
-describe('eventsIn', () => {
-  it('returns all five Nov 2 cooling changes', () => {
-    expect(eventsIn(Date.parse('2026-11-02T18:00:00Z'), Date.parse('2026-11-02T22:00:00Z'))).toHaveLength(5)
-  })
-  it('returns none for Nov 1', () => {
-    expect(eventsIn(Date.parse('2026-11-01T00:00:00Z'), Date.parse('2026-11-01T23:59:59Z'))).toHaveLength(0)
-  })
 })

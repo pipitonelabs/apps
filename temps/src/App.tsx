@@ -6,6 +6,7 @@ import { usePoll } from '@/hooks/usePoll'
 import { fetchLive } from '@/lib/live'
 
 const LIVE_MS = 10_000
+const WRAP = 'mx-auto w-full max-w-[1800px] px-[max(16px,env(safe-area-inset-left))] md:px-10'
 
 const etClock = (ms: number) =>
   new Date(ms).toLocaleTimeString('en-US', { timeZone: 'America/New_York', hour: '2-digit', minute: '2-digit', second: '2-digit' })
@@ -15,32 +16,33 @@ export default function App() {
 
   return (
     <TooltipProvider>
-      <div className="mx-auto flex w-full max-w-[1800px] flex-col gap-8 px-[max(16px,env(safe-area-inset-left))] py-8 md:px-10">
-        <header className="flex flex-wrap items-end justify-between gap-4 border-b border-border pb-5">
-          <div className="flex flex-col gap-1">
-            <span className="text-[10px] tracking-[0.35em] text-primary uppercase">pipitonelabs · k8s</span>
-            <h1 className="font-heading text-3xl font-bold tracking-[0.2em] uppercase md:text-4xl">Thermals</h1>
+      <header className="sticky top-0 z-20 border-b border-border bg-background/85 pt-[env(safe-area-inset-top)] backdrop-blur-xl">
+        <div className={`${WRAP} flex flex-wrap items-center justify-between gap-4 py-5`}>
+          <div className="flex items-baseline gap-3">
+            <h1 className="text-2xl font-medium tracking-tight">Thermals</h1>
+            <span className="text-sm text-muted-foreground">pipitonelabs k8s</span>
           </div>
-          <div className="flex items-center gap-3 text-[11px] tracking-[0.18em] text-muted-foreground uppercase">
-            {live.stale && <Badge variant="destructive">data stale</Badge>}
-            <span className="flex items-center gap-2">
-              <span className="pulse-dot size-1.5 rounded-full bg-primary shadow-[0_0_8px_var(--primary)]" />
-              live · {LIVE_MS / 1000}s
+          <div className="flex items-center gap-3 text-sm text-muted-foreground">
+            {live.stale && <Badge variant="destructive">Data stale</Badge>}
+            <span className="flex items-center gap-2 rounded-full bg-secondary px-3 py-1 text-foreground">
+              <span className="pulse-dot size-1.5 rounded-full bg-emerald-400" />
+              Live
             </span>
-            <span className="tabular-nums">{live.updatedAt ? `${etClock(live.updatedAt)} ET` : 'connecting…'}</span>
+            <span className="tabular-nums">{live.updatedAt ? `${etClock(live.updatedAt)} ET` : 'Connecting…'}</span>
           </div>
-        </header>
+        </div>
+      </header>
 
+      <main className={`${WRAP} flex flex-col gap-12 py-8`}>
         {live.data ? (
           <LiveGrid nodes={live.data} />
         ) : (
-          <div className="py-20 text-center text-xs tracking-[0.3em] text-muted-foreground uppercase">
-            {live.error ? 'prometheus unreachable — retrying' : 'acquiring telemetry…'}
+          <div className="py-20 text-center text-sm text-muted-foreground">
+            {live.error ? 'Prometheus unreachable — retrying' : 'Loading…'}
           </div>
         )}
-
         <Timelines />
-      </div>
+      </main>
     </TooltipProvider>
   )
 }

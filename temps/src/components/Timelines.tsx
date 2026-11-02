@@ -20,8 +20,8 @@ export function Timelines() {
     <section className="flex flex-col gap-4">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div className="flex items-center gap-3">
-          <h2 className="font-heading text-lg font-semibold tracking-[0.25em] uppercase">Timeline</h2>
-          {series.stale && <Badge variant="destructive">history stale</Badge>}
+          <h2 className="text-xl font-medium">History</h2>
+          {series.stale && <Badge variant="destructive">History stale</Badge>}
         </div>
         <RangePicker value={range} onChange={setRange} />
       </div>
@@ -37,8 +37,8 @@ export function Timelines() {
           />
         ))
       ) : (
-        <div className="py-16 text-center text-xs tracking-[0.3em] text-muted-foreground uppercase">
-          {series.error ? 'history unavailable — retrying' : 'loading history…'}
+        <div className="py-16 text-center text-sm text-muted-foreground">
+          {series.error ? 'History unavailable — retrying' : 'Loading history…'}
         </div>
       )}
     </section>
