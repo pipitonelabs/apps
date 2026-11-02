@@ -2,12 +2,13 @@
 @import "tw-animate-css";
 @import "shadcn/tailwind.css";
 @import "@fontsource-variable/jetbrains-mono";
-@import "@fontsource-variable/orbitron";
+@import "@fontsource-variable/inter";
 
 @custom-variant dark (&:is(.dark *));
 
 @theme inline {
-    --font-heading: "Orbitron Variable", "JetBrains Mono Variable", monospace;
+    --font-heading: "Inter Variable", ui-sans-serif, system-ui, sans-serif;
+    --font-sans: "Inter Variable", ui-sans-serif, system-ui, sans-serif;
     --color-state-normal: var(--state-normal);
     --color-state-warm: var(--state-warm);
     --color-state-hot: var(--state-hot);
@@ -54,35 +55,33 @@
 
 :root {
     color-scheme: dark;
-    --background: oklch(0.13 0.012 250);
-    --foreground: oklch(0.96 0.01 220);
-    --card: oklch(0.17 0.016 250 / 0.72);
-    --card-foreground: oklch(0.96 0.01 220);
-    --popover: oklch(0.18 0.018 250);
-    --popover-foreground: oklch(0.96 0.01 220);
-    --primary: oklch(0.86 0.14 205);
-    --primary-foreground: oklch(0.15 0.02 250);
-    --secondary: oklch(0.22 0.02 250);
-    --secondary-foreground: oklch(0.96 0.01 220);
-    --muted: oklch(0.22 0.02 250);
-    --muted-foreground: oklch(0.66 0.025 235);
-    --accent: oklch(0.25 0.04 220);
-    --accent-foreground: oklch(0.96 0.01 220);
-    --destructive: oklch(0.68 0.21 25);
-    --border: oklch(0.86 0.14 205 / 14%);
-    --input: oklch(0.86 0.14 205 / 18%);
-    --ring: oklch(0.86 0.14 205 / 60%);
-    --chart-1: oklch(0.86 0.14 205);
-    --chart-2: oklch(0.72 0.19 300);
-    --chart-3: oklch(0.84 0.17 150);
-    --chart-4: oklch(0.86 0.15 92);
-    --chart-5: oklch(0.66 0.025 235);
-    --radius: 0.9rem;
-    --state-normal: oklch(0.86 0.14 205);
-    --state-warm: oklch(0.78 0.17 60);
-    --state-hot: oklch(0.68 0.22 25);
-    --glow: oklch(0.86 0.14 205 / 35%);
-    --grid: oklch(0.86 0.14 205 / 5%);
+    --background: oklch(0.145 0 0);
+    --foreground: oklch(0.97 0 0);
+    --card: oklch(0.19 0 0);
+    --card-foreground: oklch(0.97 0 0);
+    --popover: oklch(0.21 0 0);
+    --popover-foreground: oklch(0.97 0 0);
+    --primary: oklch(0.97 0 0);
+    --primary-foreground: oklch(0.15 0 0);
+    --secondary: oklch(0.25 0 0);
+    --secondary-foreground: oklch(0.97 0 0);
+    --muted: oklch(0.25 0 0);
+    --muted-foreground: oklch(0.62 0 0);
+    --accent: oklch(0.26 0 0);
+    --accent-foreground: oklch(0.97 0 0);
+    --destructive: oklch(0.64 0.21 27);
+    --border: oklch(1 0 0 / 8%);
+    --input: oklch(1 0 0 / 12%);
+    --ring: oklch(1 0 0 / 30%);
+    --chart-1: oklch(0.97 0 0);
+    --chart-2: oklch(0.7 0.15 250);
+    --chart-3: oklch(0.76 0.14 165);
+    --chart-4: oklch(0.7 0.16 300);
+    --chart-5: oklch(0.62 0 0);
+    --radius: 1rem;
+    --state-normal: oklch(0.97 0 0);
+    --state-warm: oklch(0.74 0.17 55);
+    --state-hot: oklch(0.64 0.21 27);
 }
 
 @layer base {
@@ -93,23 +92,24 @@
     @apply bg-background text-foreground;
     }
   html {
-    @apply font-mono;
+    @apply font-sans;
     }
 }
 
+/* Static backdrop: only content scrolls over it. */
+body::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  background: radial-gradient(900px 500px at 70% -10%, oklch(1 0 0 / 4%), transparent 70%), var(--background);
+}
 body {
-  min-height: 100dvh;
-  background:
-    radial-gradient(1200px 600px at 50% -10%, oklch(0.86 0.14 205 / 10%), transparent 60%),
-    linear-gradient(var(--grid) 1px, transparent 1px) 0 0 / 48px 48px,
-    linear-gradient(90deg, var(--grid) 1px, transparent 1px) 0 0 / 48px 48px,
-    var(--background);
+  background: var(--background);
   font-variant-numeric: tabular-nums;
+  -webkit-font-smoothing: antialiased;
 }
 
-.glow-text { text-shadow: 0 0 18px currentColor; }
-.glow-edge { box-shadow: inset 0 1px 0 oklch(1 0 0 / 6%), 0 0 0 1px var(--border), 0 10px 40px -20px var(--glow); }
-
-@keyframes pulse-dot { 0%,100% { opacity: 1; transform: scale(1) } 50% { opacity: .45; transform: scale(.8) } }
-.pulse-dot { animation: pulse-dot 2s ease-in-out infinite; }
+@keyframes pulse-dot { 0%,100% { opacity: 1 } 50% { opacity: .35 } }
+.pulse-dot { animation: pulse-dot 2.4s ease-in-out infinite; }
 @media (prefers-reduced-motion: reduce) { .pulse-dot { animation: none } }
