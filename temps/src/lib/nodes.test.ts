@@ -17,3 +17,17 @@ describe('visibleNodes', () => {
     expect(visibleNodes('mem', 'w2')).toEqual([])
   })
 })
+
+import { visibleMetrics } from './nodes'
+
+describe('visibleMetrics', () => {
+  it('shows every metric for all nodes', () => {
+    expect(visibleMetrics('all').map((m) => m.key)).toEqual(['cpu', 'nvme0', 'nvme1', 'mem'])
+  })
+  it('hides memory when only w2 is selected (no sensor)', () => {
+    expect(visibleMetrics('w2').map((m) => m.key)).toEqual(['cpu', 'nvme0', 'nvme1'])
+  })
+  it('keeps memory for an MS-01 node', () => {
+    expect(visibleMetrics('m2').map((m) => m.key)).toContain('mem')
+  })
+})

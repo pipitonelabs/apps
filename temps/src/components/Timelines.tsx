@@ -1,13 +1,14 @@
 import { useState } from 'react'
 import { Badge } from '@/components/ui/badge'
 import { usePoll } from '@/hooks/usePoll'
-import { METRICS, type NodeSelection } from '@/lib/nodes'
+import { METRICS, visibleMetrics, type Metric, type NodeSelection } from '@/lib/nodes'
 import { DEFAULT_RANGE, fetchSeries, type RangeKey } from '@/lib/series'
 import { NodePicker } from './NodePicker'
 import { RangePicker } from './RangePicker'
 import { TempChart } from './TempChart'
 
 const CHART_MS = 30_000
+const idx = (k: Metric) => METRICS.findIndex((m) => m.key === k)
 
 export function Timelines() {
   const [range, setRange] = useState<RangeKey>(DEFAULT_RANGE)
@@ -31,15 +32,15 @@ export function Timelines() {
         </div>
       </div>
       {series.data ? (
-        METRICS.map(({ key, label }, i) => (
+        visibleMetrics(node).map(({ key, label }) => (
           <TempChart
             key={key}
             metric={key}
             selection={node}
             title={label}
-            rows={series.data![i].rows}
-            start={series.data![i].start}
-            end={series.data![i].end}
+            rows={series.data![idx(key)].rows}
+            start={series.data![idx(key)].start}
+            end={series.data![idx(key)].end}
           />
         ))
       ) : (

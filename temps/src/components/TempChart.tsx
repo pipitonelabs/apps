@@ -44,11 +44,6 @@ export function TempChart({ metric, selection, title, rows, start, end }: { metr
           ))}
         </div>
       </div>
-      {nodes.length === 0 ? (
-        <div className="flex h-[220px] items-center justify-center text-sm text-muted-foreground sm:h-[300px]">
-          No {title.toLowerCase()} sensor on {selection}
-        </div>
-      ) : (
       <ChartContainer config={config} className="aspect-auto h-[220px] w-full sm:h-[300px]">
         <LineChart data={rows} margin={{ top: 8, right: 8, left: 0, bottom: 0 }}>
           <CartesianGrid vertical={false} stroke="var(--border)" />
@@ -88,7 +83,6 @@ export function TempChart({ metric, selection, title, rows, start, end }: { metr
           ))}
         </LineChart>
       </ChartContainer>
-      )}
     </Card>
   )
 }
