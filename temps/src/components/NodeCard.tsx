@@ -53,7 +53,6 @@ function Value({ metric, value, size }: { metric: Metric; value: Reading; size: 
   const state = tempState(metric, value)
   const shown = useTween(typeof value === 'number' ? value : null)
   const num = size === 'lg' ? 'text-4xl sm:text-5xl' : 'text-2xl sm:text-3xl'
-  if (value === 'no-sensor') return <span className="text-sm text-muted-foreground">No sensor</span>
   if (value === null)
     return (
       <Tooltip>
@@ -63,6 +62,7 @@ function Value({ metric, value, size }: { metric: Metric; value: Reading; size: 
         <TooltipContent>No data</TooltipContent>
       </Tooltip>
     )
+  if (typeof value !== 'number') return null
   return (
     <span className={cn('leading-none', STATE_TEXT[state])}>
       <span className={cn(num, 'font-light tracking-tight tabular-nums')}>{(shown ?? value).toFixed(1)}</span>
@@ -95,6 +95,7 @@ const SUB: { key: Metric; label: string }[] = [
 export function NodeCard({ live }: { live: NodeLive }) {
   const meta = NODES.find((n) => n.name === live.node)!
   const { lastSeen } = live
+  const subs = SUB.filter(({ key }) => meta.hasMemSensor || key !== 'mem')
   return (
     <Card className={cn('min-h-72 justify-between gap-6 rounded-2xl border-0 p-5 sm:p-6 ring-1 ring-border', !live.online && 'opacity-60')}>
       <div className="flex items-start justify-between gap-4">
@@ -125,7 +126,7 @@ export function NodeCard({ live }: { live: NodeLive }) {
       </div>
       <Bar metric="cpu" value={live.values.cpu} />
       <div className="grid grid-cols-3 gap-3 border-t sm:gap-5 border-border pt-5">
-        {SUB.map(({ key, label }) => (
+        {subs.map(({ key, label }) => (
           <div key={key} className="flex min-w-0 flex-col gap-2">
             <span className="text-xs text-muted-foreground">{label}</span>
             <Value metric={key} value={live.values[key]} size="md" />

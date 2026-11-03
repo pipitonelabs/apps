@@ -82,6 +82,16 @@
     --state-normal: oklch(0.97 0 0);
     --state-warm: oklch(0.74 0.17 55);
     --state-hot: oklch(0.64 0.21 27);
+    /* TradeForge select tokens (dark) */
+    --tf-background: oklch(13% 0.002 264);
+    --tf-foreground: oklch(95% 0.002 264);
+    --tf-popover: oklch(16% 0.002 264);
+    --tf-accent: oklch(22% 0.002 264);
+    --tf-border: oklch(24% 0.002 264);
+    --tf-input: oklch(22% 0.002 264);
+    --tf-muted: oklch(60% 0.002 264);
+    --tf-primary: oklch(68% 0.16 160);
+    --tf-ring: oklch(68% 0.16 160);
 }
 
 @layer base {

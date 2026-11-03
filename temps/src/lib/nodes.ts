@@ -39,3 +39,8 @@ export type NodeSelection = 'all' | NodeName
 export function visibleNodes(metric: Metric, selection: NodeSelection) {
   return NODES.filter((n) => (selection === 'all' || n.name === selection) && (metric !== 'mem' || n.hasMemSensor))
 }
+
+/** Metrics worth drawing under the current selection; drops ones no selected node has a sensor for. */
+export function visibleMetrics(selection: NodeSelection) {
+  return METRICS.filter(({ key }) => visibleNodes(key, selection).length > 0)
+}
