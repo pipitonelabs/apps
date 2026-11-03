@@ -32,3 +32,10 @@ const UP_SELECTOR = 'up{instance=~"192\\\\.168\\\\.10\\\\.1[0-5]:9100"}'
 export const UP_QUERY = UP_SELECTOR
 /** Unix seconds of each node's last successful scrape within Prometheus retention (1m resolution). */
 export const LAST_SEEN_QUERY = `max by (instance) (max_over_time(timestamp(${UP_SELECTOR} == 1)[14d:1m]))`
+
+export type NodeSelection = 'all' | NodeName
+
+/** Nodes to draw for a metric under the current dropdown selection. */
+export function visibleNodes(metric: Metric, selection: NodeSelection) {
+  return NODES.filter((n) => (selection === 'all' || n.name === selection) && (metric !== 'mem' || n.hasMemSensor))
+}
