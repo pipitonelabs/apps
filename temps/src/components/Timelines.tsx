@@ -1,8 +1,9 @@
 import { useState } from 'react'
 import { Badge } from '@/components/ui/badge'
 import { usePoll } from '@/hooks/usePoll'
-import { METRICS } from '@/lib/nodes'
+import { METRICS, type NodeSelection } from '@/lib/nodes'
 import { DEFAULT_RANGE, fetchSeries, type RangeKey } from '@/lib/series'
+import { NodePicker } from './NodePicker'
 import { RangePicker } from './RangePicker'
 import { TempChart } from './TempChart'
 
@@ -10,6 +11,7 @@ const CHART_MS = 30_000
 
 export function Timelines() {
   const [range, setRange] = useState<RangeKey>(DEFAULT_RANGE)
+  const [node, setNode] = useState<NodeSelection>('all')
   const series = usePoll(
     () => Promise.all(METRICS.map(({ key }) => fetchSeries(key, range))),
     CHART_MS,
@@ -23,13 +25,17 @@ export function Timelines() {
           <h2 className="text-xl font-medium">History</h2>
           {series.stale && <Badge variant="destructive">History stale</Badge>}
         </div>
-        <RangePicker value={range} onChange={setRange} />
+        <div className="flex flex-wrap items-center gap-2">
+          <NodePicker value={node} onChange={setNode} />
+          <RangePicker value={range} onChange={setRange} />
+        </div>
       </div>
       {series.data ? (
         METRICS.map(({ key, label }, i) => (
           <TempChart
             key={key}
             metric={key}
+            selection={node}
             title={label}
             rows={series.data![i].rows}
             start={series.data![i].start}

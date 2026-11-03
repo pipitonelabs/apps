@@ -1,7 +1,7 @@
 import { CartesianGrid, Line, LineChart, ReferenceLine, XAxis, YAxis } from 'recharts'
 import { Card } from '@/components/ui/card'
 import { ChartContainer, ChartTooltip, ChartTooltipContent, type ChartConfig } from '@/components/ui/chart'
-import { NODES, type Metric } from '@/lib/nodes'
+import { visibleNodes, type Metric, type NodeSelection } from '@/lib/nodes'
 import type { ChartRow } from '@/lib/series'
 import { THRESHOLDS } from '@/lib/thresholds'
 
@@ -21,8 +21,8 @@ const fmtTick = (span: number) => (ms: number) =>
 const fmtFull = (ms: number) =>
   new Date(ms).toLocaleString('en-US', { timeZone: TZ, month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' }) + ' ET'
 
-export function TempChart({ metric, title, rows, start, end }: { metric: Metric; title: string; rows: ChartRow[]; start: number; end: number }) {
-  const nodes = NODES.filter((n) => metric !== 'mem' || n.hasMemSensor)
+export function TempChart({ metric, selection, title, rows, start, end }: { metric: Metric; selection: NodeSelection; title: string; rows: ChartRow[]; start: number; end: number }) {
+  const nodes = visibleNodes(metric, selection)
   const latest = (name: string) => {
     for (let i = rows.length - 1; i >= 0; i--) {
       const v = rows[i][name as keyof ChartRow]
@@ -44,6 +44,11 @@ export function TempChart({ metric, title, rows, start, end }: { metric: Metric;
           ))}
         </div>
       </div>
+      {nodes.length === 0 ? (
+        <div className="flex h-[220px] items-center justify-center text-sm text-muted-foreground sm:h-[300px]">
+          No {title.toLowerCase()} sensor on {selection}
+        </div>
+      ) : (
       <ChartContainer config={config} className="aspect-auto h-[220px] w-full sm:h-[300px]">
         <LineChart data={rows} margin={{ top: 8, right: 8, left: 0, bottom: 0 }}>
           <CartesianGrid vertical={false} stroke="var(--border)" />
@@ -83,6 +88,7 @@ export function TempChart({ metric, title, rows, start, end }: { metric: Metric;
           ))}
         </LineChart>
       </ChartContainer>
+      )}
     </Card>
   )
 }
