@@ -56,3 +56,15 @@ describe('buildLive', () => {
     expect(buildLive(allUp, full())[3].values.mem).toBe('no-sensor')
   })
 })
+
+it('picks the hottest online CPU', async () => {
+  const { hottestCpu } = await import('./live')
+  const n = (node: 'm0' | 'm1' | 'w2', cpu: number | null, online = true) => ({
+    node,
+    online,
+    lastSeen: null,
+    values: { cpu, nvme0: null, nvme1: null, mem: null },
+  })
+  expect(hottestCpu([n('m0', 48.2), n('m1', 61.5), n('w2', 70, false)])).toEqual({ node: 'm1', temp: 61.5 })
+  expect(hottestCpu([n('m0', null)])).toBeNull()
+})

@@ -78,7 +78,7 @@
     --chart-3: oklch(0.76 0.14 165);
     --chart-4: oklch(0.7 0.16 300);
     --chart-5: oklch(0.62 0 0);
-    --radius: 1rem;
+    --radius: 0.5rem;
     --state-normal: oklch(0.97 0 0);
     --state-warm: oklch(0.74 0.17 55);
     --state-hot: oklch(0.64 0.21 27);

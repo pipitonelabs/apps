@@ -37,14 +37,29 @@ jobs:
 
       - name: Smoke test container
         run: |
-          docker run -d --name temps -p 8080:8080 -e PROM_URL=http://127.0.0.1:9 ${{ env.IMAGE }}:${{ github.sha }}
+          docker run -d --name temps -p 8080:8080 -e PROM_URL=http://127.0.0.1:9 -e KROMGO_URL=http://127.0.0.1:9 -e TAUTULLI_URL=http://127.0.0.1:9 -e JELLYFIN_URL=http://127.0.0.1:9 ${{ env.IMAGE }}:${{ github.sha }}
           sleep 3
           docker logs temps
-          test "$(curl -s -o /dev/null -w '%{http_code}' localhost:8080/healthz)" = 200
-          test "$(curl -s -o /dev/null -w '%{http_code}' localhost:8080/)" = 200
-          test "$(curl -s -o /dev/null -w '%{http_code}' localhost:8080/api/v1/labels)" = 404
-          test "$(curl -s -o /dev/null -w '%{http_code}' -X POST localhost:8080/api/v1/query)" = 403
-          test "$(curl -s -o /dev/null -w '%{http_code}' 'localhost:8080/api/v1/query?query=up')" = 502
+          fail=0
+          check() {
+            want=$1; shift
+            got=$(curl -s -o /dev/null -w '%{http_code}' "$@")
+            echo "$got (want $want) $*"
+            [ "$got" = "$want" ] || fail=1
+          }
+          check 200 localhost:8080/healthz
+          check 200 localhost:8080/
+          check 404 localhost:8080/api/v1/labels
+          check 403 -X POST localhost:8080/api/v1/query
+          check 502 'localhost:8080/api/v1/query?query=up'
+          check 502 localhost:8080/kromgo/talos_version
+          check 404 localhost:8080/kromgo/Not-A-Badge
+          check 403 -X POST localhost:8080/kromgo/talos_version
+          check 502 localhost:8080/streams/plex
+          check 502 localhost:8080/streams/jellyfin
+          check 404 localhost:8080/streams/other
+          check 403 -X POST localhost:8080/streams/plex
+          exit $fail
 
       - name: Log in to GHCR
         if: github.event_name != 'pull_request'

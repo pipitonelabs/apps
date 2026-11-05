@@ -97,7 +97,7 @@ export function NodeCard({ live }: { live: NodeLive }) {
   const { lastSeen } = live
   const subs = SUB.filter(({ key }) => meta.hasMemSensor || key !== 'mem')
   return (
-    <Card className={cn('min-h-72 justify-between gap-6 rounded-2xl border-0 p-5 sm:p-6 ring-1 ring-border', !live.online && 'opacity-60')}>
+    <Card className={cn('min-h-72 justify-between gap-6 rounded-lg border-0 p-5 sm:p-6 ring-1 ring-border', !live.online && 'opacity-60')}>
       <div className="flex items-start justify-between gap-4">
         <div className="flex min-w-0 flex-col gap-2">
           <span className="text-2xl font-medium">{live.node}</span>

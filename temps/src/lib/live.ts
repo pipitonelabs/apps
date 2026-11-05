@@ -46,3 +46,13 @@ export async function fetchLive(): Promise<NodeLive[]> {
   if (first.every((n) => n.online)) return first
   return buildLive(up, byMetric, await promQuery(LAST_SEEN_QUERY))
 }
+
+/** The hottest CPU among online nodes, for the section heading. */
+export function hottestCpu(nodes: NodeLive[]): { node: NodeName; temp: number } | null {
+  let best: { node: NodeName; temp: number } | null = null
+  for (const n of nodes) {
+    const t = n.values.cpu
+    if (n.online && typeof t === 'number' && (!best || t > best.temp)) best = { node: n.node, temp: t }
+  }
+  return best
+}
