@@ -1,19 +1,19 @@
-name: temps
+name: clusterstats
 
 on:
   push:
     branches: [main]
     paths:
-      - temps/**
-      - .github/workflows/temps.yaml
+      - clusterstats/**
+      - .github/workflows/clusterstats.yaml
   pull_request:
     paths:
-      - temps/**
-      - .github/workflows/temps.yaml
+      - clusterstats/**
+      - .github/workflows/clusterstats.yaml
   workflow_dispatch:
 
 env:
-  IMAGE: ghcr.io/${{ github.repository_owner }}/temps
+  IMAGE: ghcr.io/${{ github.repository_owner }}/clusterstats
 
 jobs:
   build:
@@ -25,21 +25,21 @@ jobs:
       - uses: actions/checkout@v4
 
       - name: Audit production dependencies
-        working-directory: temps
+        working-directory: clusterstats
         run: npm audit --omit=dev --audit-level=high
 
       - name: Build image
         uses: docker/build-push-action@v6
         with:
-          context: temps
+          context: clusterstats
           load: true
           tags: ${{ env.IMAGE }}:${{ github.sha }}
 
       - name: Smoke test container
         run: |
-          docker run -d --name temps -p 8080:8080 -e PROM_URL=http://127.0.0.1:9 -e KROMGO_URL=http://127.0.0.1:9 -e TAUTULLI_URL=http://127.0.0.1:9 -e JELLYFIN_URL=http://127.0.0.1:9 ${{ env.IMAGE }}:${{ github.sha }}
+          docker run -d --name clusterstats -p 8080:8080 -e PROM_URL=http://127.0.0.1:9 -e KROMGO_URL=http://127.0.0.1:9 -e TAUTULLI_URL=http://127.0.0.1:9 -e JELLYFIN_URL=http://127.0.0.1:9 ${{ env.IMAGE }}:${{ github.sha }}
           sleep 3
-          docker logs temps
+          docker logs clusterstats
           fail=0
           check() {
             want=$1; shift
