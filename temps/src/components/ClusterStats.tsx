@@ -1,9 +1,10 @@
 import type { ReactNode } from 'react'
-import { ArrowUpRight, Bell, Clock, Cpu, Cube, HardDrives, Memory } from '@phosphor-icons/react'
+import { ArrowUpRight, Bell, Cake, Clock, Cpu, Cube, HardDrives, Memory, Monitor } from '@phosphor-icons/react'
 import { siFlux, siGithub, siKubernetes, siTalos, type SimpleIcon } from 'simple-icons'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
 import { PULLS_URL, type OpenPrs } from '@/lib/github'
 import type { Stat, StatId, Tone } from '@/lib/stats'
+import { KUBEVIRT_MANAGER_URL, vmNote, type Vms } from '@/lib/vms'
 import { cn } from '@/lib/utils'
 
 export const ALERTMANAGER_URL = 'https://alertmanager.pipitonelabs.com'
@@ -41,12 +42,15 @@ interface TileDef {
   /** Draw a 0–100% bar under the value. */
   bar?: boolean
   missing?: string
+  /** Ignore kromgo's colour (e.g. Age turns red after a year, which is not a problem). */
+  toneless?: boolean
 }
 
 const TILES: TileDef[] = [
   { id: 'talos_version', label: 'Talos', icon: <Brand icon={siTalos} />, prefix: 'v' },
   { id: 'kubernetes_version', label: 'Kubernetes', icon: <Brand icon={siKubernetes} />, prefix: 'v' },
   { id: 'flux_version', label: 'Flux', icon: <Brand icon={siFlux} />, prefix: 'v' },
+  { id: 'cluster_birth_age', label: 'Age', icon: <Cake className={ICON} />, note: () => 'since first node', toneless: true },
   { id: 'cluster_uptime_age', label: 'Uptime', icon: <Clock className={ICON} />, note: () => 'avg across nodes' },
   { id: 'cluster_node_count', label: 'Nodes', icon: <HardDrives className={ICON} />, note: () => 'ready' },
   { id: 'cluster_pod_count', label: 'Pods', icon: <Cube className={ICON} />, note: () => 'running' },
@@ -140,6 +144,25 @@ function AlertsTile({ stat }: { stat: Stat | undefined }) {
   )
 }
 
+function VmsTile({ vms }: { vms: Vms | undefined }) {
+  return (
+    <a
+      href={KUBEVIRT_MANAGER_URL}
+      target="_blank"
+      rel="noreferrer"
+      aria-label={`VMs: ${vms ? vmNote(vms) : 'no data'} — open kubevirt-manager`}
+      className={cn(TILE, 'group transition-colors hover:bg-accent focus-visible:bg-accent focus-visible:outline-none')}
+    >
+      <span className="flex items-center justify-between">
+        <Label icon={<Monitor className={ICON} />}>VMs</Label>
+        <ArrowUpRight className="size-3.5 text-muted-foreground transition-transform group-hover:-translate-y-0.5 group-hover:translate-x-0.5 group-hover:text-foreground" />
+      </span>
+      <Value stat={vms ? { id: 'cluster_pod_count', value: String(vms.total ?? vms.running), result: vms.running, tone: 'neutral' } : undefined} def={{}} />
+      <span className="truncate text-xs text-muted-foreground">{vms ? vmNote(vms) : '\u00a0'}</span>
+    </a>
+  )
+}
+
 function PrsTile({ prs }: { prs: OpenPrs | undefined }) {
   const parts = prs ? [prs.mine && `${prs.mine} yours`, prs.bots && `${prs.bots} Renovate`, prs.others && `${prs.others} other`].filter(Boolean) : []
   return (
@@ -160,26 +183,36 @@ function PrsTile({ prs }: { prs: OpenPrs | undefined }) {
   )
 }
 
-export function ClusterStats({ stats, prs }: { stats: Partial<Record<StatId, Stat>>; prs?: OpenPrs }) {
+function StatTile({ def, stat: raw }: { def: TileDef; stat: Stat | undefined }) {
+  const stat = raw && def.toneless ? { ...raw, tone: 'neutral' as Tone } : raw
+  return (
+    <div className={TILE}>
+      <Label icon={def.icon}>{def.label}</Label>
+      <Value stat={stat} def={def} />
+      {def.bar ? (
+        <Bar stat={stat} />
+      ) : (
+        <span className="text-xs text-muted-foreground">{stat?.value && def.note ? def.note(stat) : '\u00a0'}</span>
+      )}
+    </div>
+  )
+}
+
+export function ClusterStats({ stats, prs, vms }: { stats: Partial<Record<StatId, Stat>>; prs?: OpenPrs; vms?: Vms }) {
+  // VMs sit right after Pods; Alerts and Open PRs stay last.
+  const split = TILES.findIndex((t) => t.id === 'cluster_pod_count') + 1
   return (
     <section
       aria-label="Cluster stats"
-      className="grid grid-cols-2 gap-px overflow-hidden rounded-lg bg-border ring-1 ring-border md:grid-cols-5"
+      className="grid grid-cols-2 gap-px overflow-hidden rounded-lg bg-border ring-1 ring-border md:grid-cols-4 xl:grid-cols-6"
     >
-      {TILES.map((def) => {
-        const stat = stats[def.id]
-        return (
-          <div key={def.id} className={TILE}>
-            <Label icon={def.icon}>{def.label}</Label>
-            <Value stat={stat} def={def} />
-            {def.bar ? (
-              <Bar stat={stat} />
-            ) : (
-              <span className="text-xs text-muted-foreground">{stat?.value && def.note ? def.note(stat) : ' '}</span>
-            )}
-          </div>
-        )
-      })}
+      {TILES.slice(0, split).map((def) => (
+        <StatTile key={def.id} def={def} stat={stats[def.id]} />
+      ))}
+      <VmsTile vms={vms} />
+      {TILES.slice(split).map((def) => (
+        <StatTile key={def.id} def={def} stat={stats[def.id]} />
+      ))}
       <AlertsTile stat={stats.cluster_alert_count} />
       <PrsTile prs={prs} />
     </section>

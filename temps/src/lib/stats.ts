@@ -4,6 +4,7 @@ export const STAT_IDS = [
   'talos_version',
   'kubernetes_version',
   'flux_version',
+  'cluster_birth_age',
   'cluster_uptime_age',
   'cluster_node_count',
   'cluster_pod_count',

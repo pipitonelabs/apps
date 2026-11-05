@@ -1,8 +1,8 @@
 import type { ReactNode } from 'react'
-import { ArrowUpRight, Certificate, ClockCounterClockwise, Gauge, Heartbeat } from '@phosphor-icons/react'
+import { ArrowUpRight, Certificate, ClockCounterClockwise, Heartbeat } from '@phosphor-icons/react'
 import { siCeph, siFlux } from 'simple-icons'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
-import { certReading, GATUS_URL, latencyReading, servicesReading, type Gatus } from '@/lib/gatus'
+import { certReading, GATUS_URL, servicesReading, type Gatus } from '@/lib/gatus'
 import { backupReading, cephReading, fluxReading, FLUX_URL, type Health, type Reading } from '@/lib/health'
 import type { Tone } from '@/lib/stats'
 import { cn } from '@/lib/utils'
@@ -59,7 +59,6 @@ function checks(health: Health | undefined, gatus: Gatus | undefined): Check[] {
     { key: 'backup', label: 'Last backup', icon: <ClockCounterClockwise className={ICON} />, reading: health ? backupReading(health.backups) : none },
     { key: 'flux', label: 'Flux', icon: <Brand path={siFlux.path} hex={siFlux.hex} />, reading: health ? fluxReading(health.flux) : none, href: FLUX_URL },
     { key: 'cert', label: 'Certificate', icon: <Certificate className={ICON} />, reading: gatus ? certReading(gatus) : none },
-    { key: 'latency', label: 'Response time', icon: <Gauge className={ICON} />, reading: gatus ? latencyReading(gatus) : none },
   ]
 }
 
@@ -87,7 +86,7 @@ function MaybeLink({ href, label, className, children }: { href?: string; label:
 export function HealthTiles({ health, gatus }: { health?: Health; gatus?: Gatus }) {
   const big = 'text-2xl leading-none font-light tracking-tight sm:text-3xl'
   return (
-    <section aria-label="Health" className="grid grid-cols-2 gap-px overflow-hidden rounded-lg bg-border ring-1 ring-border md:grid-cols-3 xl:grid-cols-6">
+    <section aria-label="Health" className="grid grid-cols-2 gap-px overflow-hidden rounded-lg bg-border ring-1 ring-border lg:grid-cols-5 [&>*:last-child]:col-span-2 lg:[&>*:last-child]:col-span-1">
       {checks(health, gatus).map(({ key, label, icon, reading, href }) => (
         <MaybeLink
           key={key}

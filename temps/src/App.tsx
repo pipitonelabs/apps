@@ -7,6 +7,7 @@ import { usePoll } from '@/hooks/usePoll'
 import { HealthTiles } from '@/components/HealthPanel'
 import { NowStreaming } from '@/components/NowStreaming'
 import { fetchStreams } from '@/lib/streams'
+import { fetchVms } from '@/lib/vms'
 import { fetchGatus } from '@/lib/gatus'
 import { fetchHealth } from '@/lib/health'
 import { fetchLive, hottestCpu } from '@/lib/live'
@@ -36,6 +37,7 @@ export default function App() {
   const gatus = demoGatus(gatusPoll.data)
   const showHealth = !!(health || gatus)
   const streamsPoll = usePoll(fetchStreams, STREAMS_MS)
+  const vms = usePoll(fetchVms, STATS_MS)
   const streams = demoStreams(streamsPoll.data)
   const playing = streams?.streams.filter((s) => s.state !== 'paused').length ?? 0
   const statsData = demoStats(stats.data)
@@ -65,7 +67,7 @@ export default function App() {
         <section className="flex flex-col gap-4">
           <h2 className="text-xl font-medium">Cluster</h2>
           {statsData ? (
-            <ClusterStats stats={statsData} prs={demoPrs(prs.data)} />
+            <ClusterStats stats={statsData} prs={demoPrs(prs.data)} vms={vms.data} />
           ) : (
             <div className="py-10 text-center text-sm text-muted-foreground">
               {stats.error ? 'kromgo unreachable — retrying' : 'Loading…'}

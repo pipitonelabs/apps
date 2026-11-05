@@ -28,8 +28,6 @@ const gatus = (down: string[] = []): Gatus => ({
   total: 42,
   groups: [{ group: 'media', up: 11 - down.length, total: 11, down }],
   availability24h: 99.94,
-  avgResponseMs: 161,
-  slowest: { name: 'karma', ms: 754 },
   certDays: 39.4,
 })
 

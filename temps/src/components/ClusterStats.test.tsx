@@ -1,6 +1,9 @@
 // @vitest-environment jsdom
 import { render, screen } from '@testing-library/react'
-import { expect, it } from 'vitest'
+import { cleanup } from '@testing-library/react'
+import { afterEach, expect, it } from 'vitest'
+
+afterEach(cleanup)
 import { TooltipProvider } from '@/components/ui/tooltip'
 import type { Stat, StatId } from '@/lib/stats'
 import { ALERTMANAGER_URL, ClusterStats } from './ClusterStats'
@@ -46,4 +49,17 @@ it('shows open PRs as the last tile, split by author', () => {
   expect(links.at(-1)?.getAttribute('aria-label')).toMatch(/open prs: 5/i)
   expect(links.at(-2)?.getAttribute('aria-label')).toMatch(/^alerts/i)
   expect(screen.getByText('2 yours · 3 Renovate')).toBeTruthy()
+})
+
+it('shows running VMs after Pods, linking to kubevirt-manager', () => {
+  render(
+    <TooltipProvider>
+      <ClusterStats stats={{}} vms={{ running: 4, total: 4 }} />
+    </TooltipProvider>,
+  )
+  const vm = screen.getByRole('link', { name: /vms: 4 of 4 running/i })
+  expect(vm.getAttribute('href')).toBe('https://kubevirt-manager.pipitonelabs.com')
+  expect(screen.getByText('4 of 4 running')).toBeTruthy()
+  const labels = [...document.querySelectorAll('section > *')].map((el) => el.textContent ?? '')
+  expect(labels.findIndex((t) => t.startsWith('VMs'))).toBe(labels.findIndex((t) => t.startsWith('Pods')) + 1)
 })
