@@ -1,8 +1,8 @@
 import type { ReactNode } from 'react'
-import { ArrowUpRight, Certificate, ClockCounterClockwise, Heartbeat } from '@phosphor-icons/react'
+import { ArrowUpRight, ClockCounterClockwise, Heartbeat } from '@phosphor-icons/react'
 import { siCeph, siFlux } from 'simple-icons'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
-import { certReading, GATUS_URL, servicesReading, type Gatus } from '@/lib/gatus'
+import { GATUS_URL, servicesReading, type Gatus } from '@/lib/gatus'
 import { backupReading, cephReading, fluxReading, FLUX_URL, type Health, type Reading } from '@/lib/health'
 import type { Tone } from '@/lib/stats'
 import { cn } from '@/lib/utils'
@@ -57,8 +57,7 @@ function checks(health: Health | undefined, gatus: Gatus | undefined): Check[] {
     { key: 'services', label: 'Services', icon: <Heartbeat className={ICON} />, reading: gatus ? servicesReading(gatus) : none, href: GATUS_URL },
     { key: 'ceph', label: 'Ceph', icon: <Brand path={siCeph.path} hex={siCeph.hex} />, reading: health ? cephReading(health.ceph) : none },
     { key: 'backup', label: 'Last backup', icon: <ClockCounterClockwise className={ICON} />, reading: health ? backupReading(health.backups) : none },
-    { key: 'flux', label: 'Flux', icon: <Brand path={siFlux.path} hex={siFlux.hex} />, reading: health ? fluxReading(health.flux) : none, href: FLUX_URL },
-    { key: 'cert', label: 'Certificate', icon: <Certificate className={ICON} />, reading: gatus ? certReading(gatus) : none },
+    { key: 'flux', label: 'Flux sync', icon: <Brand path={siFlux.path} hex={siFlux.hex} />, reading: health ? fluxReading(health.flux) : none, href: FLUX_URL },
   ]
 }
 
@@ -83,10 +82,11 @@ function MaybeLink({ href, label, className, children }: { href?: string; label:
   )
 }
 
+/** Health tiles, rendered as bare grid items so they share the Cluster Health grid. */
 export function HealthTiles({ health, gatus }: { health?: Health; gatus?: Gatus }) {
-  const big = 'text-2xl leading-none font-light tracking-tight sm:text-3xl'
+  const big = 'truncate text-2xl leading-none font-light tracking-tight sm:text-3xl'
   return (
-    <section aria-label="Health" className="grid grid-cols-2 gap-px overflow-hidden rounded-lg bg-border ring-1 ring-border lg:grid-cols-5 [&>*:last-child]:col-span-2 lg:[&>*:last-child]:col-span-1">
+    <>
       {checks(health, gatus).map(({ key, label, icon, reading, href }) => (
         <MaybeLink
           key={key}
@@ -108,6 +108,6 @@ export function HealthTiles({ health, gatus }: { health?: Health; gatus?: Gatus 
           </span>
         </MaybeLink>
       ))}
-    </section>
+    </>
   )
 }

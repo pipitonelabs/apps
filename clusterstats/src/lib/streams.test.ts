@@ -71,6 +71,17 @@ it('parses a Jellyfin movie session and skips idle ones', () => {
   expect(streams[0].progress).toBeCloseTo(36.14, 1)
 })
 
+it('reads PlayMethod from PlayState (Jellyfin 12)', () => {
+  const [s] = parseJellyfin([
+    {
+      UserName: 'admin',
+      PlayState: { PositionTicks: 401_536_700, IsPaused: false, PlayMethod: 'Transcode' },
+      NowPlayingItem: { Name: 'Die Hard', Type: 'Movie', ProductionYear: 1988, RunTimeTicks: 79_279_240_000, Height: 1080 },
+    },
+  ])
+  expect(s).toMatchObject({ title: 'Die Hard', subtitle: '1988', transcode: true, quality: '1080p' })
+})
+
 it('keeps one source when the other fails', async () => {
   vi.stubGlobal(
     'fetch',

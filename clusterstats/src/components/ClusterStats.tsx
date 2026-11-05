@@ -59,7 +59,7 @@ const TILES: TileDef[] = [
 ]
 
 function Value({ stat, def }: { stat: Stat | undefined; def: Pick<TileDef, 'prefix' | 'missing'> }) {
-  const cls = 'text-2xl leading-none font-light tracking-tight tabular-nums sm:text-3xl'
+  const cls = 'truncate text-2xl leading-none font-light tracking-tight tabular-nums sm:text-3xl'
   if (!stat?.value)
     return (
       <Tooltip>
@@ -198,13 +198,24 @@ function StatTile({ def, stat: raw }: { def: TileDef; stat: Stat | undefined }) 
   )
 }
 
-export function ClusterStats({ stats, prs, vms }: { stats: Partial<Record<StatId, Stat>>; prs?: OpenPrs; vms?: Vms }) {
-  // VMs sit right after Pods; Alerts and Open PRs stay last.
+export function ClusterStats({
+  stats,
+  prs,
+  vms,
+  health,
+}: {
+  stats: Partial<Record<StatId, Stat>>
+  prs?: OpenPrs
+  vms?: Vms
+  /** Health tiles, placed after Memory so Alerts and Open PRs stay last. */
+  health?: ReactNode
+}) {
+  // 16 tiles: 4 rows of 4, or 2 rows of 8 on wide screens. VMs sit right after Pods.
   const split = TILES.findIndex((t) => t.id === 'cluster_pod_count') + 1
   return (
     <section
-      aria-label="Cluster stats"
-      className="grid grid-cols-2 gap-px overflow-hidden rounded-lg bg-border ring-1 ring-border md:grid-cols-4 xl:grid-cols-6"
+      aria-label="Cluster health"
+      className="grid grid-cols-2 gap-px overflow-hidden rounded-lg bg-border ring-1 ring-border md:grid-cols-4 2xl:grid-cols-8"
     >
       {TILES.slice(0, split).map((def) => (
         <StatTile key={def.id} def={def} stat={stats[def.id]} />
@@ -213,6 +224,7 @@ export function ClusterStats({ stats, prs, vms }: { stats: Partial<Record<StatId
       {TILES.slice(split).map((def) => (
         <StatTile key={def.id} def={def} stat={stats[def.id]} />
       ))}
+      {health}
       <AlertsTile stat={stats.cluster_alert_count} />
       <PrsTile prs={prs} />
     </section>
