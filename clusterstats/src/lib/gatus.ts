@@ -18,14 +18,11 @@ export interface Gatus {
   groups: GatusGroup[]
   /** Average success over the last 24h, as a percentage. */
   availability24h: number | null
-  /** Days until the soonest-expiring certificate Gatus checks. */
-  certDays: number | null
 }
 
 export const GATUS_QUERIES = {
   success: 'gatus_results_endpoint_success',
   availability: 'avg(avg_over_time(gatus_results_endpoint_success[24h])) * 100',
-  certDays: 'min(gatus_results_certificate_expiration_seconds) / 86400',
 } as const
 type Key = keyof typeof GATUS_QUERIES
 
@@ -51,7 +48,6 @@ export function buildGatus(r: Partial<Record<Key, PromVector>>): Gatus {
     total: groups.reduce((n, g) => n + g.total, 0),
     groups,
     availability24h: scalar(r.availability),
-    certDays: scalar(r.certDays),
   }
 }
 
@@ -75,11 +71,5 @@ export function servicesReading(g: Gatus): Reading {
       .filter(Boolean)
       .join(' · '),
   }
-}
-
-export function certReading(g: Gatus): Reading {
-  if (g.certDays === null) return { value: null, tone: 'neutral', note: '' }
-  const d = Math.floor(g.certDays)
-  return { value: `${d}d left`, tone: d < 7 ? 'bad' : d < 14 ? 'warn' : 'good', note: '*.pipitonelabs.com' }
 }
 

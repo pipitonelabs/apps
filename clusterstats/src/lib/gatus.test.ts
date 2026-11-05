@@ -8,12 +8,10 @@ it('groups endpoints and lists failures first', () => {
   const g = buildGatus({
     success: [ep('media', 'plex', 1), ep('media', 'jellyfin', 0), ep('default', 'blog', 1)],
     availability: v(99.94),
-    certDays: v(39.4),
   })
   expect(g.up).toBe(2)
   expect(g.total).toBe(3)
   expect(g.groups[0]).toEqual({ group: 'media', up: 1, total: 2, down: ['jellyfin'] })
-  expect(g.certDays).toBe(39.4)
 })
 
 it('copes with no data', () => {

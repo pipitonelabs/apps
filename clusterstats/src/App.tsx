@@ -65,21 +65,20 @@ export default function App() {
 
       <main className={`${WRAP} flex flex-col gap-10 py-6 sm:gap-12 sm:py-8`}>
         <section className="flex flex-col gap-4">
-          <h2 className="text-xl font-medium">Cluster</h2>
-          {statsData ? (
-            <ClusterStats stats={statsData} prs={demoPrs(prs.data)} vms={vms.data} />
+          <h2 className="text-xl font-medium">Cluster Health</h2>
+          {statsData || showHealth ? (
+            <ClusterStats
+              stats={statsData ?? {}}
+              prs={demoPrs(prs.data)}
+              vms={vms.data}
+              health={<HealthTiles health={health} gatus={gatus} />}
+            />
           ) : (
             <div className="py-10 text-center text-sm text-muted-foreground">
               {stats.error ? 'kromgo unreachable — retrying' : 'Loading…'}
             </div>
           )}
         </section>
-        {showHealth && (
-          <section className="flex flex-col gap-4">
-            <h2 className="text-xl font-medium">Health</h2>
-            <HealthTiles health={health} gatus={gatus} />
-          </section>
-        )}
         <section className="flex flex-col gap-4">
           <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
             <h2 className="text-xl font-medium">Now streaming</h2>

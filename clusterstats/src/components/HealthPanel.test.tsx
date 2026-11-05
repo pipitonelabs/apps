@@ -28,7 +28,6 @@ const gatus = (down: string[] = []): Gatus => ({
   total: 42,
   groups: [{ group: 'media', up: 11 - down.length, total: 11, down }],
   availability24h: 99.94,
-  certDays: 39.4,
 })
 
 it('links Flux to the Flux UI and Services to Gatus', () => {
@@ -37,7 +36,7 @@ it('links Flux to the Flux UI and Services to Gatus', () => {
       <HealthTiles health={health} gatus={gatus()} />
     </TooltipProvider>,
   )
-  const flux = screen.getByRole('link', { name: /flux: all synced/i })
+  const flux = screen.getByRole('link', { name: /flux sync: all synced/i })
   expect(flux.getAttribute('href')).toBe(FLUX_URL)
   expect(flux.getAttribute('target')).toBe('_blank')
   expect(screen.getByRole('link', { name: /services: 42\/42 up/i }).getAttribute('href')).toBe('https://status.pipitonelabs.com')

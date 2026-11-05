@@ -87,7 +87,8 @@ interface JellyfinSession {
   Client?: string
   DeviceName?: string
   PlayMethod?: string
-  PlayState?: { PositionTicks?: number; IsPaused?: boolean }
+  /** Jellyfin 12 reports PlayMethod under PlayState; older versions put it at the top level. */
+  PlayState?: { PositionTicks?: number; IsPaused?: boolean; PlayMethod?: string }
   NowPlayingItem?: {
     Name?: string
     SeriesName?: string
@@ -123,7 +124,7 @@ export function parseJellyfin(body: JellyfinSession[]): Stream[] {
         progress: pos !== null && dur ? Math.min(100, (pos / dur) * 100) : null,
         positionMs: pos === null ? null : pos / TICKS_PER_MS,
         durationMs: dur === null ? null : dur / TICKS_PER_MS,
-        transcode: s.PlayMethod === 'Transcode',
+        transcode: (s.PlayState?.PlayMethod ?? s.PlayMethod) === 'Transcode',
         quality: height ? `${height}p` : '',
       }
     })
