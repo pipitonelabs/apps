@@ -31,7 +31,7 @@ export function TempChart({ metric, selection, title, rows, start, end }: { metr
     return null
   }
   return (
-    <Card className="gap-4 rounded-2xl border-0 px-3 py-5 ring-1 sm:p-6 ring-border">
+    <Card className="gap-4 rounded-lg border-0 px-3 py-5 ring-1 sm:p-6 ring-border">
       <div className="flex flex-wrap items-center justify-between gap-3 px-2 sm:px-0">
         <span className="text-base font-medium">{title}</span>
         <div className="flex flex-wrap gap-x-4 gap-y-1 text-xs sm:gap-5 sm:text-sm">

@@ -16,6 +16,30 @@ server {
     return 404;
   }
 
+  # Read-only kromgo proxy: /kromgo/<badge id> -> kromgo's JSON for that badge, GET only.
+  location /kromgo/ {
+    limit_except GET { deny all; }
+    rewrite ^/kromgo/([a-z0-9_]+)$ /badges/$1?format=json? break;
+    return 404;
+    proxy_pass ${KROMGO_URL};
+  }
+
+  # Read-only playback sessions. The API keys are added here and never reach the browser.
+  location = /streams/plex {
+    limit_except GET { deny all; }
+    rewrite ^ /api/v2?cmd=get_activity&apikey=${TAUTULLI_API_KEY}? break;
+    proxy_pass ${TAUTULLI_URL};
+  }
+  location = /streams/jellyfin {
+    limit_except GET { deny all; }
+    rewrite ^ /Sessions?activeWithinSeconds=60? break;
+    proxy_set_header X-Emby-Token "${JELLYFIN_API_KEY}";
+    proxy_pass ${JELLYFIN_URL};
+  }
+  location /streams/ {
+    return 404;
+  }
+
   location = /healthz {
     access_log off;
     default_type text/plain;
