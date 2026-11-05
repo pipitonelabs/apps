@@ -6,6 +6,7 @@ import { GATUS_URL, servicesReading, type Gatus } from '@/lib/gatus'
 import { backupReading, cephReading, fluxReading, FLUX_URL, type Health, type Reading } from '@/lib/health'
 import type { Tone } from '@/lib/stats'
 import { cn } from '@/lib/utils'
+import { TILE, TILE_FOOT, TILE_HEAD, TILE_VALUE } from './tile'
 
 const TONE_TEXT: Record<Tone, string> = {
   good: 'text-foreground',
@@ -84,7 +85,7 @@ function MaybeLink({ href, label, className, children }: { href?: string; label:
 
 /** Health tiles, rendered as bare grid items so they share the Cluster Health grid. */
 export function HealthTiles({ health, gatus }: { health?: Health; gatus?: Gatus }) {
-  const big = 'truncate text-2xl leading-none font-light tracking-tight sm:text-3xl'
+  const big = TILE_VALUE
   return (
     <>
       {checks(health, gatus).map(({ key, label, icon, reading, href }) => (
@@ -92,9 +93,9 @@ export function HealthTiles({ health, gatus }: { health?: Health; gatus?: Gatus 
           key={key}
           href={href}
           label={`${label}: ${reading.value ?? 'no data'}`}
-          className="flex min-h-32 flex-col justify-between gap-4 bg-card p-4 sm:p-5"
+          className={TILE}
         >
-          <span className="flex items-center justify-between">
+          <span className={TILE_HEAD}>
             <span className="flex items-center gap-2 text-xs text-muted-foreground">
               {icon}
               {label}
@@ -102,7 +103,7 @@ export function HealthTiles({ health, gatus }: { health?: Health; gatus?: Gatus 
             {href && <Arrow />}
           </span>
           {reading.value === null ? <Missing className={big} /> : <span className={cn(big, TONE_TEXT[reading.tone])}>{reading.value}</span>}
-          <span className="flex items-center gap-2 truncate text-xs text-muted-foreground">
+          <span className={cn(TILE_FOOT, 'items-center')}>
             {reading.value !== null && <Dot tone={reading.tone} pulse={reading.tone === 'bad'} />}
             <span className="truncate">{reading.note || ' '}</span>
           </span>

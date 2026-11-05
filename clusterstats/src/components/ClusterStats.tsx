@@ -6,6 +6,7 @@ import { PULLS_URL, type OpenPrs } from '@/lib/github'
 import type { Stat, StatId, Tone } from '@/lib/stats'
 import { KUBEVIRT_MANAGER_URL, vmNote, type Vms } from '@/lib/vms'
 import { cn } from '@/lib/utils'
+import { TILE, TILE_FOOT, TILE_HEAD, TILE_VALUE } from './tile'
 
 export const ALERTMANAGER_URL = 'https://alertmanager.pipitonelabs.com'
 
@@ -59,7 +60,7 @@ const TILES: TileDef[] = [
 ]
 
 function Value({ stat, def }: { stat: Stat | undefined; def: Pick<TileDef, 'prefix' | 'missing'> }) {
-  const cls = 'truncate text-2xl leading-none font-light tracking-tight tabular-nums sm:text-3xl'
+  const cls = cn(TILE_VALUE, 'tabular-nums')
   if (!stat?.value)
     return (
       <Tooltip>
@@ -91,8 +92,6 @@ function Bar({ stat }: { stat: Stat | undefined }) {
   )
 }
 
-const TILE = 'flex min-h-32 flex-col justify-between gap-4 bg-card p-4 sm:p-5'
-
 function Label({ icon, children }: { icon: ReactNode; children: ReactNode }) {
   return (
     <span className="flex items-center gap-2 text-xs text-muted-foreground">
@@ -118,12 +117,12 @@ function AlertsTile({ stat }: { stat: Stat | undefined }) {
       )}
     >
       {firing && <span aria-hidden className="pointer-events-none absolute inset-0 ring-1 ring-inset ring-state-hot/40 motion-safe:animate-pulse" />}
-      <span className="flex items-center justify-between">
+      <span className={TILE_HEAD}>
         <Label icon={<Bell className={cn(ICON, firing && 'text-state-hot')} weight={firing ? 'fill' : 'regular'} />}>Alerts</Label>
         <ArrowUpRight className="size-3.5 text-muted-foreground transition-transform group-hover:-translate-y-0.5 group-hover:translate-x-0.5 group-hover:text-foreground" />
       </span>
       <Value stat={stat} def={{}} />
-      <span className={cn('flex items-center gap-2 text-xs', firing ? 'text-state-hot' : 'text-muted-foreground')}>
+      <span className={cn(TILE_FOOT, 'items-center', firing && 'text-state-hot')}>
         {count === null ? (
           'Alertmanager'
         ) : firing ? (
@@ -153,12 +152,12 @@ function VmsTile({ vms }: { vms: Vms | undefined }) {
       aria-label={`VMs: ${vms ? vmNote(vms) : 'no data'} — open kubevirt-manager`}
       className={cn(TILE, 'group transition-colors hover:bg-accent focus-visible:bg-accent focus-visible:outline-none')}
     >
-      <span className="flex items-center justify-between">
+      <span className={TILE_HEAD}>
         <Label icon={<Monitor className={ICON} />}>VMs</Label>
         <ArrowUpRight className="size-3.5 text-muted-foreground transition-transform group-hover:-translate-y-0.5 group-hover:translate-x-0.5 group-hover:text-foreground" />
       </span>
       <Value stat={vms ? { id: 'cluster_pod_count', value: String(vms.total ?? vms.running), result: vms.running, tone: 'neutral' } : undefined} def={{}} />
-      <span className="truncate text-xs text-muted-foreground">{vms ? vmNote(vms) : '\u00a0'}</span>
+      <span className={cn(TILE_FOOT, 'truncate')}>{vms ? vmNote(vms) : '\u00a0'}</span>
     </a>
   )
 }
@@ -173,12 +172,12 @@ function PrsTile({ prs }: { prs: OpenPrs | undefined }) {
       aria-label={`Open PRs: ${prs?.total ?? 'no data'} — open GitHub`}
       className={cn(TILE, 'group transition-colors hover:bg-accent focus-visible:bg-accent focus-visible:outline-none')}
     >
-      <span className="flex items-center justify-between">
+      <span className={TILE_HEAD}>
         <Label icon={<Brand icon={siGithub} mono />}>Open PRs</Label>
         <ArrowUpRight className="size-3.5 text-muted-foreground transition-transform group-hover:-translate-y-0.5 group-hover:translate-x-0.5 group-hover:text-foreground" />
       </span>
       <Value stat={prs ? { id: 'cluster_alert_count', value: String(prs.total), result: prs.total, tone: 'neutral' } : undefined} def={{ missing: 'GitHub unreachable' }} />
-      <span className="truncate text-xs text-muted-foreground">{prs ? (parts.length ? parts.join(' · ') : 'none open') : '\u00a0'}</span>
+      <span className={cn(TILE_FOOT, 'truncate')}>{prs ? (parts.length ? parts.join(' · ') : 'none open') : '\u00a0'}</span>
     </a>
   )
 }
@@ -190,9 +189,11 @@ function StatTile({ def, stat: raw }: { def: TileDef; stat: Stat | undefined }) 
       <Label icon={def.icon}>{def.label}</Label>
       <Value stat={stat} def={def} />
       {def.bar ? (
-        <Bar stat={stat} />
+        <span className={cn(TILE_FOOT, 'items-center')}>
+          <Bar stat={stat} />
+        </span>
       ) : (
-        <span className="text-xs text-muted-foreground">{stat?.value && def.note ? def.note(stat) : '\u00a0'}</span>
+        <span className={TILE_FOOT}>{stat?.value && def.note ? def.note(stat) : '\u00a0'}</span>
       )}
     </div>
   )
