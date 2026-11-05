@@ -33,7 +33,8 @@ server {
   location = /streams/jellyfin {
     limit_except GET { deny all; }
     rewrite ^ /Sessions?activeWithinSeconds=60? break;
-    proxy_set_header X-Emby-Token "${JELLYFIN_API_KEY}";
+    # Jellyfin 12 only accepts the Authorization header; the legacy X-Emby-Token header is rejected.
+    proxy_set_header Authorization 'MediaBrowser Token="${JELLYFIN_API_KEY}"';
     proxy_pass ${JELLYFIN_URL};
   }
   location /streams/ {
