@@ -50,10 +50,10 @@ const TILES: TileDef[] = [
   { id: 'talos_version', label: 'Talos', icon: <Brand icon={siTalos} />, prefix: 'v' },
   { id: 'kubernetes_version', label: 'Kubernetes', icon: <Brand icon={siKubernetes} />, prefix: 'v' },
   { id: 'flux_version', label: 'Flux', icon: <Brand icon={siFlux} />, prefix: 'v' },
-  { id: 'cluster_birth_age', label: 'Age', icon: <Cake className={ICON} />, note: () => 'since first node', toneless: true },
-  { id: 'cluster_uptime_age', label: 'Uptime', icon: <Clock className={ICON} />, note: () => 'avg across nodes' },
   { id: 'cluster_node_count', label: 'Nodes', icon: <HardDrives className={ICON} />, note: () => 'ready' },
   { id: 'cluster_pod_count', label: 'Pods', icon: <Cube className={ICON} />, note: () => 'running' },
+  { id: 'cluster_birth_age', label: 'Age', icon: <Cake className={ICON} />, note: () => 'since first node', toneless: true },
+  { id: 'cluster_uptime_age', label: 'Uptime', icon: <Clock className={ICON} />, note: () => 'avg across nodes' },
   { id: 'cluster_cpu_usage', label: 'CPU', icon: <Cpu className={ICON} />, bar: true },
   { id: 'cluster_memory_usage', label: 'Memory', icon: <Memory className={ICON} />, bar: true },
 ]
