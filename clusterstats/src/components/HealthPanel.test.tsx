@@ -7,30 +7,51 @@ import { backupReading, cephReading, FLUX_URL, fluxReading, type Health } from '
 import { HealthTiles } from './HealthPanel'
 import type { Gatus } from '@/lib/gatus'
 
-const pgs = { total: 81, clean: 81, degraded: 0, undersized: 0 }
-const idle = { names: [], total: 12 }
+const pgs = { total: 81, clean: 81, degraded: 0, undersized: 0, recovering: 0 }
+const idle = { names: [], upgrading: [], total: 12 }
 const ceph = (o: Partial<Health['ceph']> = {}): Health['ceph'] => ({ status: 0, osdsUp: 4, osds: 4, pgs, rolling: idle, ...o })
 
 it('reads ceph states', () => {
   expect(cephReading(ceph())).toEqual({ value: 'Healthy', tone: 'good', note: '4/4 OSDs up · 81 PGs clean' })
   expect(cephReading(ceph({ osdsUp: 3 })).tone).toBe('warn')
+  expect(cephReading(ceph({ status: 1 }))).toEqual({ value: 'Warning', tone: 'warn', note: 'HEALTH_WARN · 4/4 OSDs up · 81 PGs clean' })
+  expect(cephReading(ceph({ status: 2 }))).toEqual({ value: 'Error', tone: 'bad', note: 'HEALTH_ERR · 4/4 OSDs up · 81 PGs clean' })
+  // PGs out of place with every daemon up: recovering when Ceph is working on it, degraded when it is not
+  expect(cephReading(ceph({ status: 1, pgs: { ...pgs, clean: 58, degraded: 23, recovering: 23 } }))).toEqual({
+    value: 'Recovering',
+    tone: 'warn',
+    note: '23 PGs recovering · 4/4 OSDs up',
+  })
   expect(cephReading(ceph({ status: 1, osdsUp: 3, pgs: { ...pgs, clean: 69, degraded: 12 } }))).toEqual({
-    value: 'Warning',
+    value: 'Degraded',
     tone: 'warn',
     note: 'HEALTH_WARN · 12 PGs degraded · 3/4 OSDs up',
   })
-  expect(cephReading(ceph({ status: 2 }))).toEqual({ value: 'Error', tone: 'bad', note: 'HEALTH_ERR · 4/4 OSDs up · 81 PGs clean' })
-  // Rolling with Ceph metrics present
-  expect(cephReading(ceph({ status: 1, osdsUp: 3, rolling: { names: ['rook-ceph-mon-c'], total: 12 } }))).toEqual({
+  expect(cephReading(ceph({ status: 2, pgs: { ...pgs, degraded: 12, recovering: 12 } })).value).toBe('Error')
+  // Daemons down with no spec change (node reboot) restart; a recent spec change is a rollout
+  const rebooting = { names: ['rook-ceph-mon-h', 'rook-ceph-osd-0'], upgrading: [], total: 12 }
+  expect(cephReading(ceph({ status: 1, osdsUp: 3, pgs: { ...pgs, clean: 17, degraded: 63, undersized: 64 }, rolling: rebooting }))).toEqual({
+    value: 'Restarting',
+    tone: 'warn',
+    note: 'mon h, osd 0 restarting · 3/4 OSDs up · 63 PGs degraded',
+  })
+  const upgrade = { names: ['rook-ceph-mon-c'], upgrading: ['rook-ceph-mgr-a', 'rook-ceph-mon-c'], total: 12 }
+  expect(cephReading(ceph({ status: 1, osdsUp: 3, rolling: upgrade }))).toEqual({
     value: 'Upgrading',
     tone: 'warn',
-    note: 'mon c restarting · 3/4 OSDs up · 81 PGs clean',
+    note: 'mon c upgrading · 3/4 OSDs up · 81 PGs clean',
   })
-  expect(cephReading(ceph({ status: 2, rolling: { names: ['rook-ceph-mon-c'], total: 12 } })).value).toBe('Error')
+  expect(cephReading(ceph({ status: 2, rolling: upgrade })).value).toBe('Error')
   // Rolling with Ceph metrics missing
-  const gone = { status: null, osdsUp: null, osds: null, pgs: { total: null, clean: null, degraded: null, undersized: null } }
-  expect(cephReading(ceph({ ...gone, rolling: { names: ['rook-ceph-mgr-a', 'rook-ceph-osd-0', 'rook-ceph-mds-ceph-filesystem-b'], total: 12 } }))).toEqual({
+  const gone = { status: null, osdsUp: null, osds: null, pgs: { total: null, clean: null, degraded: null, undersized: null, recovering: null } }
+  const three = ['rook-ceph-mds-ceph-filesystem-b', 'rook-ceph-mgr-a', 'rook-ceph-osd-0']
+  expect(cephReading(ceph({ ...gone, rolling: { names: three, upgrading: three, total: 12 } }))).toEqual({
     value: 'Upgrading',
+    tone: 'warn',
+    note: '3 of 12 daemons upgrading',
+  })
+  expect(cephReading(ceph({ ...gone, rolling: { names: three, upgrading: [], total: 12 } }))).toEqual({
+    value: 'Restarting',
     tone: 'warn',
     note: '3 of 12 daemons restarting',
   })
