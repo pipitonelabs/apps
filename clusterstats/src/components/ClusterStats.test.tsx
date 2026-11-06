@@ -1,12 +1,12 @@
 // @vitest-environment jsdom
-import { render, screen } from '@testing-library/react'
-import { cleanup } from '@testing-library/react'
+import { cleanup, fireEvent, render, screen } from '@testing-library/react'
 import { afterEach, expect, it } from 'vitest'
 
 afterEach(cleanup)
 import { TooltipProvider } from '@/components/ui/tooltip'
 import type { Stat, StatId } from '@/lib/stats'
 import { ALERTMANAGER_URL, ClusterStats } from './ClusterStats'
+import { SizeProvider, SizeSwitcher } from './SizeSwitcher'
 
 const s = (id: StatId, value: string | null, result: number | null, tone: Stat['tone'] = 'good'): Stat => ({ id, value, result, tone })
 
@@ -62,4 +62,31 @@ it('shows running VMs after Pods, linking to kubevirt-manager', () => {
   expect(screen.getByText('4 of 4 running')).toBeTruthy()
   const labels = [...document.querySelectorAll('section > *')].map((el) => el.textContent ?? '')
   expect(labels.findIndex((t) => t.startsWith('VMs'))).toBe(labels.findIndex((t) => t.startsWith('Pods')) + 1)
+})
+
+it('defaults to small, and switching sizes updates the root font-size and persists', () => {
+  const store = new Map<string, string>()
+  Object.defineProperty(window, 'localStorage', {
+    configurable: true,
+    value: { getItem: (k: string) => store.get(k) ?? null, setItem: (k: string, v: string) => void store.set(k, v) },
+  })
+  render(
+    <TooltipProvider>
+      <SizeProvider>
+        <SizeSwitcher />
+      </SizeProvider>
+    </TooltipProvider>,
+  )
+  const root = document.documentElement
+  expect(screen.getByRole('radio', { name: 'Small' }).getAttribute('aria-checked')).toBe('true')
+  expect(root.dataset.size).toBe('dense')
+  expect(root.style.fontSize).toBe('13px')
+  expect(store.get('clusterstats.tileSize')).toBe('dense')
+  fireEvent.click(screen.getByRole('radio', { name: 'Extra large' }))
+  expect(root.dataset.size).toBe('default')
+  expect(root.style.fontSize).toBe('16px')
+  expect(store.get('clusterstats.tileSize')).toBe('default')
+  fireEvent.click(screen.getByRole('radio', { name: 'Medium' }))
+  expect(root.style.fontSize).toBe('14px')
+  expect(store.get('clusterstats.tileSize')).toBe('compact')
 })

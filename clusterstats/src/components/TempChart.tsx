@@ -2,6 +2,7 @@ import { CartesianGrid, Line, LineChart, ReferenceLine, XAxis, YAxis } from 'rec
 import { Card } from '@/components/ui/card'
 import { ChartContainer, ChartTooltip, ChartTooltipContent, type ChartConfig } from '@/components/ui/chart'
 import { visibleNodes, type Metric, type NodeSelection } from '@/lib/nodes'
+import { useScale } from './size'
 import type { ChartRow } from '@/lib/series'
 import { THRESHOLDS } from '@/lib/thresholds'
 
@@ -22,6 +23,7 @@ const fmtFull = (ms: number) =>
   new Date(ms).toLocaleString('en-US', { timeZone: TZ, month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' }) + ' ET'
 
 export function TempChart({ metric, selection, title, rows, start, end }: { metric: Metric; selection: NodeSelection; title: string; rows: ChartRow[]; start: number; end: number }) {
+  const scale = useScale()
   const nodes = visibleNodes(metric, selection)
   const latest = (name: string) => {
     for (let i = rows.length - 1; i >= 0; i--) {
@@ -44,7 +46,7 @@ export function TempChart({ metric, selection, title, rows, start, end }: { metr
           ))}
         </div>
       </div>
-      <ChartContainer config={config} className="aspect-auto h-[220px] w-full sm:h-[300px]">
+      <ChartContainer config={config} className="aspect-auto h-55 w-full sm:h-75">
         <LineChart data={rows} margin={{ top: 8, right: 8, left: 0, bottom: 0 }}>
           <CartesianGrid vertical={false} stroke="var(--border)" />
           <XAxis
@@ -55,10 +57,10 @@ export function TempChart({ metric, selection, title, rows, start, end }: { metr
             tickFormatter={fmtTick(end - start)}
             tickLine={false}
             axisLine={false}
-            minTickGap={56}
+            minTickGap={Math.round(56 * scale)}
           />
           <YAxis
-            width={36}
+            width={Math.round(36 * scale)}
             tickLine={false}
             axisLine={false}
             domain={[(min: number) => Math.floor(min - 3), (max: number) => Math.ceil(max + 3)]}
