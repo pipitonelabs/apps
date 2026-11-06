@@ -1,9 +1,9 @@
 import { Badge } from "@/components/ui/badge";
 import { ClusterStats } from "@/components/ClusterStats";
 import {
-  TileSizeProvider,
-  TileSizeSwitcher,
-} from "@/components/TileSizeSwitcher";
+  SizeProvider,
+  SizeSwitcher,
+} from "@/components/SizeSwitcher";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { LiveGrid } from "@/components/LiveGrid";
 import { Timelines } from "@/components/Timelines";
@@ -33,7 +33,7 @@ const STREAMS_MS = 15_000;
 // GitHub's unauthenticated search API allows 10 requests a minute.
 const GITHUB_MS = 120_000;
 const WRAP =
-  "mx-auto w-full max-w-[1800px] px-[max(16px,env(safe-area-inset-left))] md:px-10";
+  "mx-auto w-full max-w-[1800px] px-[max(1rem,env(safe-area-inset-left))] md:px-10";
 
 const etClock = (ms: number) =>
   new Date(ms).toLocaleTimeString("en-US", {
@@ -63,7 +63,7 @@ export default function App() {
 
   return (
     <TooltipProvider>
-      <TileSizeProvider>
+      <SizeProvider>
         <header className="sticky top-0 z-20 border-b border-border bg-background/85 pt-[env(safe-area-inset-top)] backdrop-blur-xl">
           <div
             className={`${WRAP} flex items-center justify-between gap-4 py-4 sm:py-5`}
@@ -100,7 +100,7 @@ export default function App() {
           <section className="flex flex-col gap-4">
             <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-2">
               <h2 className="text-xl font-medium">Cluster Health</h2>
-              <TileSizeSwitcher />
+              <SizeSwitcher />
             </div>
             {statsData || showHealth ? (
               <ClusterStats
@@ -169,7 +169,7 @@ export default function App() {
           </section>
           <Timelines />
         </main>
-      </TileSizeProvider>
+      </SizeProvider>
     </TooltipProvider>
   );
 }
