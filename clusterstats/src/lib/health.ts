@@ -7,7 +7,7 @@ export const FLUX_URL = 'https://flux.pipitonelabs.com'
 export interface Health {
   ceph: { status: 0 | 1 | 2 | null; osdsUp: number | null; osds: number | null }
   backups: { oldestAgeSec: number | null; apps: number | null; outOfSync: number | null }
-  flux: { total: number | null; failing: number | null; suspended: number | null }
+  flux: { total: number | null; syncing: number | null; failing: number | null; suspended: number | null }
 }
 
 export const HEALTH_QUERIES = {
@@ -20,7 +20,12 @@ export const HEALTH_QUERIES = {
   backupApps: 'count(volsync_sync_duration_seconds_count{role="source"})',
   outOfSync: 'sum(volsync_volume_out_of_sync)',
   fluxTotal: 'count(flux_resource_info)',
-  fluxFailing: 'count(flux_resource_info{ready!="True",suspended="False"}) or vector(0)',
+  // Not ready right now. Kustomizations go Ready=Unknown/False while a new revision reconciles, so this is usually transient.
+  fluxSyncing: 'count(flux_resource_info{ready!="True",suspended="False"}) or vector(0)',
+  // Not ready for every sample of the last 5m. Normalised per resource (1 = not ready, 0 = ready) because the revision/reason
+  // labels change between scrapes. A resource younger than 5m is judged on the samples it has.
+  fluxFailing:
+    'count(min_over_time((max by (exported_namespace, kind, name) (flux_resource_info{ready!="True",suspended="False"}) or max by (exported_namespace, kind, name) (flux_resource_info) * 0)[5m:30s]) == 1) or vector(0)',
   fluxSuspended: 'count(flux_resource_info{suspended="True"}) or vector(0)',
 } as const
 type Key = keyof typeof HEALTH_QUERIES
@@ -35,7 +40,7 @@ export function buildHealth(r: Partial<Record<Key, PromVector>>): Health {
   return {
     ceph: { status: status === 0 || status === 1 || status === 2 ? status : null, osdsUp: scalar(r.osdsUp), osds: scalar(r.osds) },
     backups: { oldestAgeSec: scalar(r.oldestBackupAge), apps: scalar(r.backupApps), outOfSync: scalar(r.outOfSync) },
-    flux: { total: scalar(r.fluxTotal), failing: scalar(r.fluxFailing), suspended: scalar(r.fluxSuspended) },
+    flux: { total: scalar(r.fluxTotal), syncing: scalar(r.fluxSyncing), failing: scalar(r.fluxFailing), suspended: scalar(r.fluxSuspended) },
   }
 }
 
@@ -83,11 +88,10 @@ export function backupReading({ oldestAgeSec, apps, outOfSync }: Health['backups
   return { value: `${humanAge(oldestAgeSec)} ago`, tone, note: parts.join(' · ') }
 }
 
-export function fluxReading({ total, failing, suspended }: Health['flux']): Reading {
+export function fluxReading({ total, syncing, failing, suspended }: Health['flux']): Reading {
   if (total === null || failing === null) return { value: null, tone: 'neutral', note: '' }
   const parts = [`${total} resources`, suspended ? `${suspended} suspended` : null].filter(Boolean)
-  return failing > 0
-    ? { value: `${failing} failing`, tone: 'bad', note: parts.join(' · ') }
-    : { value: 'All synced', tone: suspended ? 'warn' : 'good', note: parts.join(' · ') }
+  if (failing > 0) return { value: `${failing} failing`, tone: 'bad', note: parts.join(' · ') }
+  if (syncing) return { value: 'Syncing', tone: 'warn', note: [`${syncing} updating`, ...parts].join(' · ') }
+  return { value: 'All synced', tone: suspended ? 'warn' : 'good', note: parts.join(' · ') }
 }
-

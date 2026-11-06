@@ -12,8 +12,9 @@ it('reads ceph, backups and flux states', () => {
   expect(cephReading({ status: 0, osdsUp: 3, osds: 4 }).tone).toBe('warn')
   expect(backupReading({ oldestAgeSec: 2670, apps: 26, outOfSync: 0 })).toEqual({ value: '44m ago', tone: 'good', note: 'oldest of 26 apps' })
   expect(backupReading({ oldestAgeSec: 2670, apps: 26, outOfSync: 2 }).tone).toBe('bad')
-  expect(fluxReading({ total: 302, failing: 0, suspended: 0 })).toEqual({ value: 'All synced', tone: 'good', note: '302 resources' })
-  expect(fluxReading({ total: 302, failing: 3, suspended: 1 })).toEqual({ value: '3 failing', tone: 'bad', note: '302 resources · 1 suspended' })
+  expect(fluxReading({ total: 302, syncing: 0, failing: 0, suspended: 0 })).toEqual({ value: 'All synced', tone: 'good', note: '302 resources' })
+  expect(fluxReading({ total: 302, syncing: 5, failing: 3, suspended: 1 })).toEqual({ value: '3 failing', tone: 'bad', note: '302 resources · 1 suspended' })
+  expect(fluxReading({ total: 302, syncing: 55, failing: 0, suspended: 0 })).toEqual({ value: 'Syncing', tone: 'warn', note: '55 updating · 302 resources' })
 })
 
 afterEach(cleanup)
@@ -21,7 +22,7 @@ afterEach(cleanup)
 const health = {
   ceph: { status: 0 as const, osdsUp: 4, osds: 4 },
   backups: { oldestAgeSec: 2670, apps: 26, outOfSync: 0 },
-  flux: { total: 302, failing: 0, suspended: 0 },
+  flux: { total: 302, syncing: 0, failing: 0, suspended: 0 },
 }
 const gatus = (down: string[] = []): Gatus => ({
   up: 42 - down.length,

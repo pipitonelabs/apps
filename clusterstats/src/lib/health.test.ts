@@ -13,13 +13,14 @@ it('builds health from query results', () => {
       backupApps: v(26),
       outOfSync: v(0),
       fluxTotal: v(302),
+      fluxSyncing: v(5),
       fluxFailing: v(2),
       fluxSuspended: v(0),
     }),
   ).toEqual({
     ceph: { status: 1, osdsUp: 3, osds: 4 },
     backups: { oldestAgeSec: 2670.19, apps: 26, outOfSync: 0 },
-    flux: { total: 302, failing: 2, suspended: 0 },
+    flux: { total: 302, syncing: 5, failing: 2, suspended: 0 },
   })
 })
 
