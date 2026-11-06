@@ -9,9 +9,12 @@ export interface Health {
     status: 0 | 1 | 2 | null
     osdsUp: number | null
     osds: number | null
-    pgs: { total: number | null; clean: number | null; degraded: number | null; undersized: number | null }
-    // Rook daemon deployments (mon, mgr, osd, mds and the operator) mid-rollout, from kube-state-metrics; null when it has no data.
-    rolling: { names: string[]; total: number } | null
+    // recovering counts PGs recovering or backfilling, or queued to.
+    pgs: { total: number | null; clean: number | null; degraded: number | null; undersized: number | null; recovering: number | null }
+    // Rook daemon deployments (mon, mgr, osd, mds and the operator) not fully available, from kube-state-metrics; null when it
+    // has no data. upgrading is the subset whose spec changed recently (a real rollout); the rest are restarting (node reboot,
+    // crashed pod).
+    rolling: { names: string[]; upgrading: string[]; total: number } | null
   }
   backups: { oldestAgeSec: number | null; apps: number | null; outOfSync: number | null }
   flux: { total: number | null; syncing: number | null; failing: number | null; suspended: number | null }
@@ -21,6 +24,8 @@ export interface Health {
 // (or the gap between two daemons restarting one after another) doesn't flicker the tile.
 const ROOK = '{namespace="rook-ceph",deployment=~"rook-ceph-(mon|mgr|osd|mds|operator).*"}'
 const ROLLING = `(kube_deployment_spec_replicas${ROOK} - kube_deployment_status_replicas_available${ROOK} > 0) or (kube_deployment_spec_replicas${ROOK} - kube_deployment_status_replicas_updated${ROOK} > 0)`
+// A deployment whose spec changed in the last 15m is being rolled out (new image or settings); without a change it is restarting.
+const SPEC_CHANGED = `max by (deployment) (changes(kube_deployment_metadata_generation${ROOK}[15m]) > 0)`
 
 export const HEALTH_QUERIES = {
   cephStatus: 'ceph_health_status',
@@ -30,7 +35,9 @@ export const HEALTH_QUERIES = {
   pgClean: 'sum(ceph_pg_clean)',
   pgDegraded: 'sum(ceph_pg_degraded)',
   pgUndersized: 'sum(ceph_pg_undersized)',
+  pgRecovering: 'sum(ceph_pg_recovering) + sum(ceph_pg_backfilling) + sum(ceph_pg_recovery_wait) + sum(ceph_pg_backfill_wait)',
   cephRolling: `max by (deployment) (max_over_time((${ROLLING})[2m:30s]))`,
+  cephUpgrading: SPEC_CHANGED,
   cephDaemons: `count(kube_deployment_spec_replicas${ROOK})`,
   // Per app, when its source last finished a sync (within a day); report the app that has gone longest.
   oldestBackupAge:
@@ -53,6 +60,8 @@ const scalar = (v: PromVector | undefined): number | null => {
   return Number.isFinite(x) ? x : null
 }
 
+const deployments = (v: PromVector | undefined): string[] => (v ?? []).map((m) => m.metric.deployment ?? '').filter(Boolean).sort()
+
 export function buildHealth(r: Partial<Record<Key, PromVector>>): Health {
   const status = scalar(r.cephStatus)
   const daemons = scalar(r.cephDaemons)
@@ -61,8 +70,14 @@ export function buildHealth(r: Partial<Record<Key, PromVector>>): Health {
       status: status === 0 || status === 1 || status === 2 ? status : null,
       osdsUp: scalar(r.osdsUp),
       osds: scalar(r.osds),
-      pgs: { total: scalar(r.pgTotal), clean: scalar(r.pgClean), degraded: scalar(r.pgDegraded), undersized: scalar(r.pgUndersized) },
-      rolling: daemons === null ? null : { names: (r.cephRolling ?? []).map((m) => m.metric.deployment ?? '').filter(Boolean).sort(), total: daemons },
+      pgs: {
+        total: scalar(r.pgTotal),
+        clean: scalar(r.pgClean),
+        degraded: scalar(r.pgDegraded),
+        undersized: scalar(r.pgUndersized),
+        recovering: scalar(r.pgRecovering),
+      },
+      rolling: daemons === null ? null : { names: deployments(r.cephRolling), upgrading: deployments(r.cephUpgrading), total: daemons },
     },
     backups: { oldestAgeSec: scalar(r.oldestBackupAge), apps: scalar(r.backupApps), outOfSync: scalar(r.outOfSync) },
     flux: { total: scalar(r.fluxTotal), syncing: scalar(r.fluxSyncing), failing: scalar(r.fluxFailing), suspended: scalar(r.fluxSuspended) },
@@ -101,12 +116,17 @@ const CEPH: Record<0 | 1 | 2, { value: string; tone: Tone; code: string }> = {
 /** "rook-ceph-mon-c" -> "mon c", "rook-ceph-mds-ceph-filesystem-a" -> "mds a", "rook-ceph-operator" -> "operator". */
 const daemonName = (d: string) => d.replace(/^rook-ceph-/, '').replace(/^mds-ceph-filesystem-/, 'mds-').replace('-', ' ')
 
-function rollingNote({ names, total }: NonNullable<Health['ceph']['rolling']>): string {
+/** "Upgrading" when any unavailable daemon is mid-rollout, otherwise "Restarting" (node reboot, crashed pod). */
+function rollingState({ names, upgrading, total }: NonNullable<Health['ceph']['rolling']>): { value: string; note: string } {
+  const upgrade = names.some((n) => upgrading.includes(n))
+  const verb = upgrade ? 'upgrading' : 'restarting'
   const named = names.map(daemonName).join(', ')
-  return names.length > 1 && named.length > 18 ? `${names.length} of ${total} daemons restarting` : `${named} restarting`
+  const note = names.length > 1 && named.length > 18 ? `${names.length} of ${total} daemons ${verb}` : `${named} ${verb}`
+  return { value: upgrade ? 'Upgrading' : 'Restarting', note }
 }
 
-function pgNote({ total, clean, degraded, undersized }: Health['ceph']['pgs']): string | null {
+function pgNote({ total, clean, degraded, undersized, recovering }: Health['ceph']['pgs']): string | null {
+  if (recovering) return `${recovering} PGs recovering`
   if (degraded) return `${degraded} PGs degraded`
   if (undersized) return `${undersized} PGs undersized`
   if (total === null || clean === null) return null
@@ -117,16 +137,24 @@ export function cephReading({ status, osdsUp, osds, pgs, rolling }: Health['ceph
   const rollingNow = rolling !== null && rolling.names.length > 0
   if (status === null) {
     // Ceph's own metrics vanish while the mons/mgr restart; Kubernetes still says what is happening.
-    return rollingNow ? { value: 'Upgrading', tone: 'warn', note: rollingNote(rolling) } : { value: null, tone: 'neutral', note: '' }
+    return rollingNow ? { tone: 'warn', ...rollingState(rolling) } : { value: null, tone: 'neutral', note: '' }
   }
   const c = CEPH[status]
   const osdsDown = osdsUp !== null && osds !== null && osdsUp < osds
   const detail = [osds !== null && `${osdsUp ?? 0}/${osds} OSDs up`, pgNote(pgs)]
-  // An error is never softened to "Upgrading"; an OK/WARN cluster mid-rollout is.
-  if (rollingNow && status !== 2) return { value: 'Upgrading', tone: 'warn', note: [rollingNote(rolling), ...detail].filter(Boolean).join(' · ') }
-  const tone: Tone = (osdsDown || pgs.degraded || pgs.undersized) && c.tone === 'good' ? 'warn' : c.tone
+  // An error is never softened; an OK/WARN cluster with daemons down or PGs out of place says what is going on.
+  if (status !== 2) {
+    if (rollingNow) {
+      const s = rollingState(rolling)
+      return { value: s.value, tone: 'warn', note: [s.note, ...detail].filter(Boolean).join(' · ') }
+    }
+    // Daemons are all back; PG trouble goes first in the note.
+    if (pgs.recovering) return { value: 'Recovering', tone: 'warn', note: [detail[1], detail[0]].filter(Boolean).join(' · ') }
+    if (pgs.degraded || pgs.undersized) return { value: 'Degraded', tone: 'warn', note: [c.code, detail[1], detail[0]].filter(Boolean).join(' · ') }
+  }
+  const tone: Tone = osdsDown && c.tone === 'good' ? 'warn' : c.tone
   // "Healthy" already says HEALTH_OK, which would not fit the tile; problems keep the Ceph code. PG trouble goes first.
-  const pgFirst = pgs.degraded || pgs.undersized ? [detail[1], detail[0]] : detail
+  const pgFirst = pgs.degraded || pgs.undersized || pgs.recovering ? [detail[1], detail[0]] : detail
   return { value: c.value, tone, note: [status === 0 ? null : c.code, ...pgFirst].filter(Boolean).join(' · ') }
 }
 
