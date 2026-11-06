@@ -18,7 +18,7 @@ export function demoStats(stats: Record<StatId, Stat> | undefined): Record<StatI
 export const demoPrs = (prs: OpenPrs | undefined): OpenPrs | undefined => (DEMO ? { total: 5, mine: 2, bots: 3, others: 0 } : prs)
 
 export const demoHealth = (h: Health | undefined): Health | undefined =>
-  DEMO && h ? { ...h, ceph: { status: 1, osdsUp: 3, osds: 4 } } : h
+  DEMO && h ? { ...h, ceph: { ...h.ceph, status: 1, osdsUp: 3, osds: 4 } } : h
 
 export function demoGatus(g: Gatus | undefined): Gatus | undefined {
   if (!DEMO || !g) return g
