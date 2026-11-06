@@ -6,7 +6,7 @@ import { GATUS_URL, servicesReading, type Gatus } from '@/lib/gatus'
 import { backupReading, cephReading, fluxReading, FLUX_URL, type Health, type Reading } from '@/lib/health'
 import type { Tone } from '@/lib/stats'
 import { cn } from '@/lib/utils'
-import { TILE, TILE_FOOT, TILE_HEAD, TILE_VALUE } from './tile'
+import { TILE_FOOT, TILE_HEAD, useTile } from './tile'
 
 const TONE_TEXT: Record<Tone, string> = {
   good: 'text-foreground',
@@ -85,7 +85,7 @@ function MaybeLink({ href, label, className, children }: { href?: string; label:
 
 /** Health tiles, rendered as bare grid items so they share the Cluster Health grid. */
 export function HealthTiles({ health, gatus }: { health?: Health; gatus?: Gatus }) {
-  const big = TILE_VALUE
+  const { tile: TILE, value: big } = useTile()
   return (
     <>
       {checks(health, gatus).map(({ key, label, icon, reading, href }) => (

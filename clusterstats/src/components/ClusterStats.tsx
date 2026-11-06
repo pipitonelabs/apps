@@ -6,7 +6,7 @@ import { PULLS_URL, type OpenPrs } from '@/lib/github'
 import type { Stat, StatId, Tone } from '@/lib/stats'
 import { KUBEVIRT_MANAGER_URL, vmNote, type Vms } from '@/lib/vms'
 import { cn } from '@/lib/utils'
-import { TILE, TILE_FOOT, TILE_HEAD, TILE_VALUE } from './tile'
+import { TILE_FOOT, TILE_HEAD, useTile } from './tile'
 
 export const ALERTMANAGER_URL = 'https://alertmanager.pipitonelabs.com'
 
@@ -60,7 +60,7 @@ const TILES: TileDef[] = [
 ]
 
 function Value({ stat, def }: { stat: Stat | undefined; def: Pick<TileDef, 'prefix' | 'missing'> }) {
-  const cls = cn(TILE_VALUE, 'tabular-nums')
+  const cls = cn(useTile().value, 'tabular-nums')
   if (!stat?.value)
     return (
       <Tooltip>
@@ -102,6 +102,7 @@ function Label({ icon, children }: { icon: ReactNode; children: ReactNode }) {
 }
 
 function AlertsTile({ stat }: { stat: Stat | undefined }) {
+  const { tile: TILE } = useTile()
   const count = stat?.result ?? null
   const firing = count !== null && count > 0
   return (
@@ -144,6 +145,7 @@ function AlertsTile({ stat }: { stat: Stat | undefined }) {
 }
 
 function VmsTile({ vms }: { vms: Vms | undefined }) {
+  const { tile: TILE } = useTile()
   return (
     <a
       href={KUBEVIRT_MANAGER_URL}
@@ -163,6 +165,7 @@ function VmsTile({ vms }: { vms: Vms | undefined }) {
 }
 
 function PrsTile({ prs }: { prs: OpenPrs | undefined }) {
+  const { tile: TILE } = useTile()
   const parts = prs ? [prs.mine && `${prs.mine} yours`, prs.bots && `${prs.bots} Renovate`, prs.others && `${prs.others} other`].filter(Boolean) : []
   return (
     <a
@@ -183,6 +186,7 @@ function PrsTile({ prs }: { prs: OpenPrs | undefined }) {
 }
 
 function StatTile({ def, stat: raw }: { def: TileDef; stat: Stat | undefined }) {
+  const { tile: TILE } = useTile()
   const stat = raw && def.toneless ? { ...raw, tone: 'neutral' as Tone } : raw
   return (
     <div className={TILE}>

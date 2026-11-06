@@ -1,12 +1,12 @@
 // @vitest-environment jsdom
-import { render, screen } from '@testing-library/react'
-import { cleanup } from '@testing-library/react'
+import { cleanup, fireEvent, render, screen } from '@testing-library/react'
 import { afterEach, expect, it } from 'vitest'
 
 afterEach(cleanup)
 import { TooltipProvider } from '@/components/ui/tooltip'
 import type { Stat, StatId } from '@/lib/stats'
 import { ALERTMANAGER_URL, ClusterStats } from './ClusterStats'
+import { TileSizeProvider, TileSizeSwitcher } from './TileSizeSwitcher'
 
 const s = (id: StatId, value: string | null, result: number | null, tone: Stat['tone'] = 'good'): Stat => ({ id, value, result, tone })
 
@@ -62,4 +62,27 @@ it('shows running VMs after Pods, linking to kubevirt-manager', () => {
   expect(screen.getByText('4 of 4 running')).toBeTruthy()
   const labels = [...document.querySelectorAll('section > *')].map((el) => el.textContent ?? '')
   expect(labels.findIndex((t) => t.startsWith('VMs'))).toBe(labels.findIndex((t) => t.startsWith('Pods')) + 1)
+})
+
+it('switches tile size from the switcher and persists it', () => {
+  const store = new Map<string, string>()
+  Object.defineProperty(window, 'localStorage', {
+    configurable: true,
+    value: { getItem: (k: string) => store.get(k) ?? null, setItem: (k: string, v: string) => void store.set(k, v) },
+  })
+  const { container } = render(
+    <TooltipProvider>
+      <TileSizeProvider>
+        <TileSizeSwitcher />
+        <ClusterStats stats={{ cluster_pod_count: s('cluster_pod_count', '100', 100) }} />
+      </TileSizeProvider>
+    </TooltipProvider>,
+  )
+  const tile = () => container.querySelector('.bg-card')!
+  expect(tile().className).toContain('min-h-32')
+  fireEvent.click(screen.getByRole('radio', { name: 'Dense tiles' }))
+  expect(tile().className).toContain('min-h-20')
+  expect(store.get('clusterstats.tileSize')).toBe('dense')
+  fireEvent.click(screen.getByRole('radio', { name: 'Dense tiles' }))
+  expect(tile().className).toContain('min-h-20')
 })
