@@ -3,6 +3,7 @@ import { promQuery, type PromVector } from './prom'
 import type { Tone } from './stats'
 
 export const FLUX_URL = 'https://flux.pipitonelabs.com'
+export const BACKUPS_URL = 'https://grafana.pipitonelabs.com/d/backups-overview'
 
 export interface Health {
   ceph: {
