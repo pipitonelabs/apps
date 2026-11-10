@@ -3,7 +3,7 @@ import { render, screen } from '@testing-library/react'
 import { cleanup } from '@testing-library/react'
 import { afterEach, expect, it } from 'vitest'
 import { TooltipProvider } from '@/components/ui/tooltip'
-import { backupReading, cephReading, FLUX_URL, fluxReading, type Health } from '@/lib/health'
+import { backupReading, BACKUPS_URL, cephReading, FLUX_URL, fluxReading, type Health } from '@/lib/health'
 import { HealthTiles } from './HealthPanel'
 import type { Gatus } from '@/lib/gatus'
 
@@ -82,7 +82,7 @@ const gatus = (down: string[] = []): Gatus => ({
   availability24h: 99.94,
 })
 
-it('links Flux to the Flux UI and Services to Gatus', () => {
+it('links Flux to the Flux UI, Services to Gatus and backups to Grafana', () => {
   render(
     <TooltipProvider>
       <HealthTiles health={health} gatus={gatus()} />
@@ -92,6 +92,7 @@ it('links Flux to the Flux UI and Services to Gatus', () => {
   expect(flux.getAttribute('href')).toBe(FLUX_URL)
   expect(flux.getAttribute('target')).toBe('_blank')
   expect(screen.getByRole('link', { name: /services: 42\/42 up/i }).getAttribute('href')).toBe('https://status.pipitonelabs.com')
+  expect(screen.getByRole('link', { name: /last backup/i }).getAttribute('href')).toBe(BACKUPS_URL)
 })
 
 it('flags failing checks', () => {

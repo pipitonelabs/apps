@@ -3,7 +3,7 @@ import { ArrowUpRight, ClockCounterClockwise, Heartbeat } from '@phosphor-icons/
 import { siCeph, siFlux } from 'simple-icons'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
 import { GATUS_URL, servicesReading, type Gatus } from '@/lib/gatus'
-import { backupReading, cephReading, fluxReading, FLUX_URL, type Health, type Reading } from '@/lib/health'
+import { backupReading, BACKUPS_URL, cephReading, fluxReading, FLUX_URL, type Health, type Reading } from '@/lib/health'
 import type { Tone } from '@/lib/stats'
 import { cn } from '@/lib/utils'
 import { TILE, TILE_FOOT, TILE_HEAD, TILE_VALUE } from './tile'
@@ -57,7 +57,7 @@ function checks(health: Health | undefined, gatus: Gatus | undefined): Check[] {
   return [
     { key: 'services', label: 'Services', icon: <Heartbeat className={ICON} />, reading: gatus ? servicesReading(gatus) : none, href: GATUS_URL },
     { key: 'ceph', label: 'Ceph', icon: <Brand path={siCeph.path} hex={siCeph.hex} />, reading: health ? cephReading(health.ceph) : none },
-    { key: 'backup', label: 'Last backup', icon: <ClockCounterClockwise className={ICON} />, reading: health ? backupReading(health.backups) : none },
+    { key: 'backup', label: 'Last backup', icon: <ClockCounterClockwise className={ICON} />, reading: health ? backupReading(health.backups) : none, href: BACKUPS_URL },
     { key: 'flux', label: 'Flux sync', icon: <Brand path={siFlux.path} hex={siFlux.hex} />, reading: health ? fluxReading(health.flux) : none, href: FLUX_URL },
   ]
 }
